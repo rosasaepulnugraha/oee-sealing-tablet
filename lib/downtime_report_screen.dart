@@ -231,7 +231,7 @@ class _DowntimeReportScreenState extends State<DowntimeReportScreen> {
 
       ListDowntime.connectToApi(
               Url().val +
-                  "api/down-time-report?operation=SEALING&per_page=6" +
+                  "api/down-time-report?operation=TOPCOAT&per_page=13" +
                   (search ? "&search=${controllerSearchLoading.text}" : ""),
               token)
           .then((value) async {
@@ -1050,6 +1050,38 @@ class _DowntimeReportScreenState extends State<DowntimeReportScreen> {
                                                               "";
 
                                                           try {
+                                                            if (await Permission
+                                                                      .manageExternalStorage
+                                                                      .request()
+                                                                      .isGranted) {
+                                                                  } else {
+                                                                    // ignore: use_build_context_synchronously
+                                                                    FancySnackbar
+                                                                        .showSnackbar(
+                                                                      context,
+                                                                      snackBarType:
+                                                                          FancySnackBarType
+                                                                              .error,
+                                                                      title:
+                                                                          "Information!",
+                                                                      message:
+                                                                          "No permission to read and write.",
+                                                                      duration:
+                                                                          2,
+                                                                      onCloseEvent:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            dialogcontext);
+                                                                        // Navigator.pushReplacement(context,
+                                                                        //     MaterialPageRoute(builder: (context) {
+                                                                        //   return NavigateScreen(
+                                                                        //     id: 1,
+                                                                        //   );
+                                                                        // }));
+                                                                      },
+                                                                    );
+                                                                    return;
+                                                                  }
                                                             bool result =
                                                                 await checkPermission();
                                                             if (result) {

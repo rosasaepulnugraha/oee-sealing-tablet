@@ -12,6 +12,7 @@ class Dashboard {
   final ProductionData? data;
   bool hasOee;
   Achievement? sealingAchievement;
+  Achievement? loadingAchievement;
   Achievement? topcoatAchievement;
 
   Dashboard({
@@ -20,6 +21,7 @@ class Dashboard {
     this.message,
     this.data,
     this.hasOee = false,
+    this.loadingAchievement,
     this.sealingAchievement,
     this.topcoatAchievement,
   });
@@ -36,6 +38,9 @@ class Dashboard {
       statusCode: status,
       sealingAchievement: object['sealing_achievement'] != null
           ? Achievement.fromJson(object['sealing_achievement'])
+          : null,
+      loadingAchievement: object['loading_achievement'] != null
+          ? Achievement.fromJson(object['loading_achievement'])
           : null,
       topcoatAchievement: object['topcoat_achievement'] != null
           ? Achievement.fromJson(object['topcoat_achievement'])
@@ -80,8 +85,8 @@ class ProductionData {
   final int shiftId;
   final int planWos;
   final int actualWos;
-  final int repair;
   final int okCount;
+    final String formatted_date;
   final int lineStop;
   final int operationTime;
   final int ngCount;
@@ -97,7 +102,7 @@ class ProductionData {
     required this.planWos,
     required this.actualWos,
     required this.okCount,
-    required this.repair,
+        required this.formatted_date,
     required this.lineStop,
     required this.operationTime,
     required this.ngCount,
@@ -111,10 +116,10 @@ class ProductionData {
     return ProductionData(
       id: json["data"]['id'],
       date: json["data"]['date'],
+      formatted_date: json["data"]['formatted_date'],
       shiftId: json["data"]['shift_id'],
       planWos: json["data"]['plan_wos'],
       actualWos: json["data"]['actual_wos'],
-      repair: json["data"]['repair'],
       lineStop: json["data"]['line_stop'] ?? 0,
       operationTime: json["data"]['operation_time'] ?? 0,
       okCount: json["data"]['ok_count'],

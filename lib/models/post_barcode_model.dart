@@ -36,12 +36,12 @@ class PostBarcode {
           body: barcode.toLowerCase().startsWith('b')
               ? {
                   "barcode": barcode,
-                  "operation": "SEALING",
+                  "operation": "TOPCOAT",
                   "body_type": body_type
                 }
               : (barcode == ""
-                  ? {"operation": "SEALING", "body_type": body_type}
-                  : {"barcode": barcode, "operation": "SEALING"}));
+                  ? {"operation": "TOPCOAT", "body_type": body_type}
+                  : {"barcode": barcode, "operation": "TOPCOAT"}));
       log("PostBarcode : " + apiResult.body);
       dynamic jsonObject = null;
       jsonObject = json.decode(apiResult.body);

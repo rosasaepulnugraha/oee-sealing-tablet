@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:fancy_snackbar/fancy_snackbar.dart';
 import 'package:isuzu_oee_app/models/list_reason.dart' as reason;
+import 'models/edit_loading_data.dart';
+import 'models/edit_wos_model.dart';
 import 'models/list_operation_time.dart';
 import 'models/list_shift.dart' as shift;
 import 'package:flutter/material.dart';
@@ -34,6 +36,7 @@ import 'models/dashboard_model.dart';
 import 'models/list_downtime.dart';
 import 'models/list_operation.dart';
 import 'models/list_shift.dart';
+import 'models/list_storage.dart';
 import 'models/post_barcode_model.dart';
 import 'models/post_downtime.dart';
 import 'models/post_end_production.dart';
@@ -116,6 +119,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _nextPageStorage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      token = await storage.read(key: "token") ?? "";
+
+      ListStorage.connectToApi(nextUrlStorage, token).then((value) async {
+        resultListLoadingStorage = value;
+        Future.delayed(Duration(seconds: 1), () {
+          setState(() {
+            _isLoading = false;
+          });
+        });
+        //print(storage.read(key: "token"));
+        if (value.status == 200) {
+          Future.delayed(Duration(seconds: 3), () {
+            setState(() {
+              _isLoading = false;
+            });
+          });
+
+          nextUrlStorage =
+              value.data != null ? value.data!.nextPageUrl ?? "" : "";
+          prevUrlStorage =
+              value.data != null ? value.data!.prevPageUrl ?? "" : "";
+          setState(() {});
+        } else {
+          if (value.message.contains('Unauthenticated')) {
+            FancySnackbar.showSnackbar(
+              context,
+              snackBarType: FancySnackBarType.error,
+              title: "Information!",
+              message:
+                  "Your account is used by someone else, please log in again",
+              duration: 5,
+              onCloseEvent: () {},
+            );
+            await storage.write(key: "keep", value: "false");
+            await storage.write(key: "token", value: "");
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => MyApp()),
+                (Route<dynamic> route) => false);
+            return;
+          }
+          // FancySnackbar.showSnackbar(
+          //   context,
+          //   snackBarType: FancySnackBarType.error,
+          //   title: "Information!",
+          //   message: profileResult.message,
+          //   duration: 5,
+          //   onCloseEvent: () {},
+          // );
+        }
+        setState(() {});
+      });
+    } catch (x) {
+      Future.delayed(Duration(seconds: 2), () {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
+  }
+
+  bool isStorage = false;
+
   void _prevPageSeal() async {
     setState(() {
       _isLoading = true;
@@ -179,7 +249,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  int startNoSeal = 0;
+  void _prevPageStorage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      token = await storage.read(key: "token") ?? "";
+
+      ListStorage.connectToApi(prevUrlStorage, token).then((value) async {
+        resultListLoadingStorage = value;
+        Future.delayed(Duration(seconds: 1), () {
+          setState(() {
+            _isLoading = false;
+          });
+        });
+        //print(storage.read(key: "token"));
+        if (value.status == 200) {
+          Future.delayed(Duration(seconds: 3), () {
+            setState(() {
+              _isLoading = false;
+            });
+          });
+
+          nextUrlStorage =
+              value.data != null ? value.data!.nextPageUrl ?? "" : "";
+          prevUrlStorage =
+              value.data != null ? value.data!.prevPageUrl ?? "" : "";
+          setState(() {});
+        } else {
+          if (value.message.contains('Unauthenticated')) {
+            FancySnackbar.showSnackbar(
+              context,
+              snackBarType: FancySnackBarType.error,
+              title: "Information!",
+              message:
+                  "Your account is used by someone else, please log in again",
+              duration: 5,
+              onCloseEvent: () {},
+            );
+            await storage.write(key: "keep", value: "false");
+            await storage.write(key: "token", value: "");
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => MyApp()),
+                (Route<dynamic> route) => false);
+            return;
+          }
+          // FancySnackbar.showSnackbar(
+          //   context,
+          //   snackBarType: FancySnackBarType.error,
+          //   title: "Information!",
+          //   message: profileResult.message,
+          //   duration: 5,
+          //   onCloseEvent: () {},
+          // );
+        }
+        setState(() {});
+      });
+    } catch (x) {
+      Future.delayed(Duration(seconds: 2), () {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
+  }
+
   TextEditingController controllerSearchLoadingSeal =
       new TextEditingController();
 
@@ -192,7 +326,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       token = await storage.read(key: "token") ?? "";
 
       ListOperation.connectToApi(
-              "${Url().val}api/operations?per_page=4&filter=today&operation=LOADING${search ? "&search=${controllerSearchLoadingSeal.text}" : ""}${body_type != null ? (body_type == "All" ? "" : "&body_type=$body_type") : ""}",
+              "${Url().val}api/operations?per_page=200&is_processed=0&filter=today&operation=SEALING${search ? "&search=${controllerSearchLoadingSeal.text}" : ""}${body_type != null ? (body_type == "All" ? "" : "&body_type=$body_type") : ""}",
               token)
           .then((value) async {
         resultListLoadingSeal = value;
@@ -252,6 +386,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String nextUrlSeal = "";
   String prevUrlSeal = "";
+  var resultListLoadingStorage = new ListStorage();
+  void _getLoadingStorage(bool search, String? body_type) async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      token = await storage.read(key: "token") ?? "";
+
+      ListStorage.connectToApi(
+              "${Url().val}api/wip-storage?per_page=200&is_processed=0&operation=SEALING${search ? "&search=${controllerSearchLoadingSeal.text}" : ""}",
+              token)
+          .then((value) async {
+        resultListLoadingStorage = value;
+        // Future.delayed(Duration(seconds: 1), () {
+        //   setState(() {
+        //     _isLoading = false;
+        //   });
+        // });
+        //print(storage.read(key: "token"));
+        if (value.status == 200) {
+          Future.delayed(Duration(seconds: 3), () {
+            setState(() {
+              _isLoading = false;
+            });
+          });
+
+          nextUrlStorage =
+              value.data != null ? value.data!.nextPageUrl ?? "" : "";
+          prevUrlStorage =
+              value.data != null ? value.data!.prevPageUrl ?? "" : "";
+          setState(() {});
+        } else {
+          if (value.message.contains('Unauthenticated')) {
+            FancySnackbar.showSnackbar(
+              context,
+              snackBarType: FancySnackBarType.error,
+              title: "Information!",
+              message:
+                  "Your account is used by someone else, please log in again",
+              duration: 5,
+              onCloseEvent: () {},
+            );
+            await storage.write(key: "keep", value: "false");
+            await storage.write(key: "token", value: "");
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => MyApp()),
+                (Route<dynamic> route) => false);
+            return;
+          }
+          // FancySnackbar.showSnackbar(
+          //   context,
+          //   snackBarType: FancySnackBarType.error,
+          //   title: "Information!",
+          //   message: profileResult.message,
+          //   duration: 5,
+          //   onCloseEvent: () {},
+          // );
+        }
+        setState(() {});
+      });
+    } catch (x) {
+      Future.delayed(Duration(seconds: 2), () {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
+  }
+
+  String nextUrlStorage = "";
+  String prevUrlStorage = "";
   double windowWidth = 0;
 
   int latestStatus = 0;
@@ -284,7 +489,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _getOperationTime();
     _getItem();
     _getLoadingSeal(false, null);
-    _focusNode = FocusNode();
     // _timer = new Timer.periodic(Duration(seconds: 1), (Timer timer) {
     //   setState(() {
     //     DateTime now = DateTime.now();
@@ -293,10 +497,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // });
   }
 
-  late FocusNode _focusNode;
   @override
   void dispose() {
-    _focusNode.dispose();
     try {
       _timer!.cancel();
     } catch (x) {}
@@ -383,7 +585,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // EasyLoading.show(status: 'loading...');
       //print("Nama =" + emailController.text);
-      Dashboard.connectToApi(token, "SEALING").then((value) async {
+      Dashboard.connectToApi(token, "TOPCOAT").then((value) async {
         dashboardResult = value;
         // Future.delayed(Duration(seconds: 1), () {
         //   setState(() {
@@ -516,7 +718,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       ListOperation.connectToApi(
               Url().val +
-                  "api/operations?per_page=5&filter=today&operation=SEALING" +
+                  "api/operations?per_page=5&filter=today&operation=TOPCOAT" +
                   (search ? "&search=${controllerSearchLoading.text}" : "") +
                   (body_type != null
                       ? (body_type == "All" ? "" : "&body_type=${body_type}")
@@ -726,7 +928,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       ListDowntimeDashboard.connectToApi(
               Url().val +
-                  "api/down-time?per_page=7&operation=SEALING" +
+                  "api/down-time?per_page=7&operation=TOPCOAT" +
                   (search ? "&search=${controllerCari.text}" : ""),
               token)
           .then((value) async {
@@ -1042,6 +1244,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  String selectedBody = "700P/FS";
+  TextEditingController bodyController = new TextEditingController();
+
+  int chooseSeries = 0;
   var selectedOperationTime =
       OperationTime(value: "tidak ada", name: "no data available");
 
@@ -1516,7 +1722,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.poppins(
                                       color: Color.fromARGB(255, 37, 90, 151),
-                                      fontSize: windowWidth < 1400 ? 20 : 23,
+                                      fontSize: windowWidth < 1400 ? 16 : 20,
                                       fontWeight: FontWeight.w500),
                                 ),
                               ],
@@ -1684,8 +1890,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   _getItem();
                                   _getLoadingSeal(false, null);
                                 },
-                                child: Expanded(
-                                    child: Container(
+                                child: Container(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 30, vertical: 13),
                                   decoration: BoxDecoration(
@@ -1713,7 +1918,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         fontSize: windowWidth < 1400 ? 20 : 23,
                                         fontWeight: FontWeight.w500),
                                   ),
-                                )),
+                                ),
                               ),
                             ],
                           )
@@ -1721,6 +1926,678 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       )
                     ],
                   )),
+              SizedBox(
+                height: !dashboardResult.hasOee ? 0 : 300,
+                child: !dashboardResult.hasOee
+                    ? Container()
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 300,
+                              margin: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Colors.white),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Scan Barcode",
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.poppins(
+                                                      color: Colors.black,
+                                                      fontSize:
+                                                          windowWidth < 1400
+                                                              ? 14
+                                                              : 18,
+                                                      fontWeight:
+                                                          FontWeight.w500),
+                                                ),
+                                                SizedBox(
+                                                  height: 5,
+                                                ),
+                                              ],
+                                            ),
+                                            Column(
+                                              children: [
+                                                Text(
+                                                  "Choose Series",
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.poppins(
+                                                      color: Colors.black,
+                                                      fontSize:
+                                                          windowWidth < 1400
+                                                              ? 14
+                                                              : 18,
+                                                      fontWeight:
+                                                          FontWeight.w500),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    InkWell(
+                                                      onTap: () async {
+                                                        setState(() {
+                                                          chooseSeries = 1;
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        margin: EdgeInsets.only(
+                                                            right: 10),
+                                                        decoration: BoxDecoration(
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withOpacity(
+                                                                        0.2),
+                                                                spreadRadius: 5,
+                                                                blurRadius: 5,
+                                                                offset: Offset(
+                                                                    0, 2),
+                                                              )
+                                                            ],
+                                                            color: chooseSeries ==
+                                                                    1
+                                                                ? Color
+                                                                    .fromARGB(
+                                                                        255,
+                                                                        134,
+                                                                        219,
+                                                                        137)
+                                                                : Colors.grey,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                vertical: 6,
+                                                                horizontal: 8),
+                                                        child: Center(
+                                                          child: Text(
+                                                            "NS",
+                                                            style: GoogleFonts
+                                                                .poppins(
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            255,
+                                                                            255,
+                                                                            255),
+                                                                    fontSize:
+                                                                        16),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () async {
+                                                        setState(() {
+                                                          chooseSeries = 2;
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        margin: EdgeInsets.only(
+                                                            right: 10),
+                                                        decoration: BoxDecoration(
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withOpacity(
+                                                                        0.2),
+                                                                spreadRadius: 5,
+                                                                blurRadius: 5,
+                                                                offset: Offset(
+                                                                    0, 2),
+                                                              )
+                                                            ],
+                                                            color: chooseSeries ==
+                                                                    2
+                                                                ? Color
+                                                                    .fromARGB(
+                                                                        255,
+                                                                        134,
+                                                                        219,
+                                                                        137)
+                                                                : Colors.grey,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                vertical: 6,
+                                                                horizontal: 8),
+                                                        child: Center(
+                                                          child: Text(
+                                                            "FS",
+                                                            style: GoogleFonts
+                                                                .poppins(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    fontSize:
+                                                                        16),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(
+                                                        color: Color.fromARGB(
+                                                            249, 241, 241, 241),
+                                                        width: 1.5),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10)),
+                                                child: Row(
+                                                  children: <Widget>[
+                                                    // Container(
+                                                    //     width: 60,
+                                                    //     child: Icon(
+                                                    //       widget.icon,
+                                                    //       size: 20,
+                                                    //       color: Color(0xFFBB9B9B9),
+                                                    //     )),
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    Expanded(
+                                                      child: TextField(
+                                                        autofocus:
+                                                            false, // Set autofocus to true
+                                                        controller:
+                                                            controllerCari,
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                        decoration:
+                                                            InputDecoration(
+                                                                hintStyle:
+                                                                    GoogleFonts
+                                                                        .poppins(
+                                                                  fontSize: 14,
+                                                                ),
+                                                                contentPadding:
+                                                                    EdgeInsets.symmetric(
+                                                                        vertical:
+                                                                            5),
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                hintText:
+                                                                    "Input Manually"),
+                                                        onChanged: (val) async {
+                                                          if (val != "") {
+                                                            print(val);
+                                                          }
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Text(
+                                              "Or",
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.poppins(
+                                                  color: Colors.black,
+                                                  fontSize: windowWidth < 1400
+                                                      ? 14
+                                                      : 18,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.all(2),
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Color.fromARGB(
+                                                            250, 230, 230, 230),
+                                                        width: 1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10)),
+                                                // width: 150,
+                                                child: CustomDropdown<String>(
+                                                  hintText: "Body Type",
+                                                  initialItem: "700P/FS",
+                                                  items: [
+                                                    "700P/FS",
+                                                    "700P/NS",
+                                                    "Rear Body",
+                                                    "Spareparts",
+                                                    "VT/P",
+                                                    "Rak Bumper",
+                                                    "Rak Fender",
+                                                    "Rak Door"
+                                                  ],
+                                                  decoration:
+                                                      CustomDropdownDecoration(
+                                                    listItemStyle: TextStyle(
+                                                      fontFamily: "Netflix",
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 14,
+                                                      letterSpacing: 0.0,
+                                                      color: Color.fromARGB(
+                                                          255, 83, 83, 83),
+                                                    ),
+                                                    headerStyle: TextStyle(
+                                                      fontFamily: "Netflix",
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 14,
+                                                      letterSpacing: 0.0,
+                                                      color: Color.fromARGB(
+                                                          255, 83, 83, 83),
+                                                    ),
+                                                    hintStyle: TextStyle(
+                                                      fontFamily: "Netflix",
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 14,
+                                                      letterSpacing: 0.0,
+                                                      color: Color.fromARGB(
+                                                          255, 110, 110, 110),
+                                                    ),
+                                                  ),
+                                                  // initialItem: "Tomat",
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      selectedBody = value;
+                                                    });
+                                                  },
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  try {
+                                                    String pilih = "";
+                                                    if (controllerCari.text
+                                                        .toLowerCase()
+                                                        .startsWith('b')) {
+                                                      if (chooseSeries == 0) {
+                                                        FancySnackbar
+                                                            .showSnackbar(
+                                                          context,
+                                                          snackBarType:
+                                                              FancySnackBarType
+                                                                  .error,
+                                                          title: "Failed!",
+                                                          message:
+                                                              "Please choose series",
+                                                          duration: 5,
+                                                          onCloseEvent: () {},
+                                                        );
+                                                        return;
+                                                      } else {
+                                                        if (chooseSeries == 1) {
+                                                          pilih = "700P/NS";
+                                                        } else {
+                                                          pilih = "700P/FS";
+                                                        }
+                                                      }
+                                                    }
+                                                    log("To " + token);
+                                                    Future.delayed(
+                                                        const Duration(
+                                                            milliseconds: 0),
+                                                        () {
+                                                      setState(() {
+                                                        _isLoading = true;
+                                                      });
+                                                    });
+                                                    PostBarcode.connectToApi(
+                                                            token,
+                                                            controllerCari.text,
+                                                            pilih == ""
+                                                                ? selectedBody
+                                                                : pilih)
+                                                        .then((value) {
+                                                      setState(() {
+                                                        Future.delayed(
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    2000), () {
+                                                          setState(() {
+                                                            _isLoading = false;
+                                                          });
+                                                        });
+                                                        //print(storage.read(key: "token"));
+                                                        if (value.status ==
+                                                                200 &&
+                                                            value.type ==
+                                                                "complete") {
+                                                          chooseSeries = 0;
+                                                          _getItem();
+                                                          FancySnackbar
+                                                              .showSnackbar(
+                                                            context,
+                                                            snackBarType:
+                                                                FancySnackBarType
+                                                                    .success,
+                                                            title:
+                                                                "Successfully!",
+                                                            message:
+                                                                value.message,
+                                                            duration: 1,
+                                                            onCloseEvent: () {},
+                                                          );
+
+                                                          DateTime dt =
+                                                              new DateTime
+                                                                  .now();
+                                                          String formattedDate =
+                                                              DateFormat(
+                                                                      'dd MMMM yyyy',
+                                                                      'id_ID')
+                                                                  .format(dt);
+                                                          String formattedTime =
+                                                              DateFormat(
+                                                                      'HH:mm:ss',
+                                                                      'id_ID')
+                                                                  .format(dt);
+                                                          latestDateScan =
+                                                              formattedDate;
+                                                          latestTimeScan =
+                                                              formattedTime;
+                                                          latestBodyScan =
+                                                              controllerCari
+                                                                          .text ==
+                                                                      ""
+                                                                  ? selectedBody
+                                                                  : controllerCari
+                                                                      .text;
+                                                          controllerCari.text =
+                                                              "";
+                                                          latestStatus = 1;
+
+                                                          setState(() {});
+                                                          _getItem();
+                                                          setState(() {});
+                                                        } else if (value
+                                                                    .status ==
+                                                                200 &&
+                                                            value.type ==
+                                                                "confirm") {
+                                                          showDialog(
+                                                              barrierDismissible:
+                                                                  true,
+                                                              context: context,
+                                                              builder:
+                                                                  (dialogcontext) {
+                                                                return AlertDialog(
+                                                                    content:
+                                                                        Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .center,
+                                                                  children: [
+                                                                    // Lottie.asset(
+                                                                    //     'assets/json/loadingBlue.json',
+                                                                    //     height: 100,
+                                                                    //     width: 100),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          20,
+                                                                    ),
+                                                                    Text(
+                                                                      value
+                                                                          .message,
+                                                                      style: GoogleFonts.inter(
+                                                                          fontWeight: FontWeight
+                                                                              .w700,
+                                                                          fontSize:
+                                                                              17,
+                                                                          color: Color.fromARGB(
+                                                                              255,
+                                                                              75,
+                                                                              75,
+                                                                              75)),
+                                                                    ),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          50,
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        Expanded(
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              Navigator.pop(dialogcontext);
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                BoxShadow(
+                                                                                  color: Colors.grey.withOpacity(0.2),
+                                                                                  spreadRadius: 5,
+                                                                                  blurRadius: 5,
+                                                                                  offset: Offset(0, 2),
+                                                                                )
+                                                                              ], color: Color.fromARGB(255, 107, 107, 107), borderRadius: BorderRadius.circular(10)),
+                                                                              padding: EdgeInsets.all(8),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  "Cancel",
+                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              20,
+                                                                        ),
+                                                                        Expanded(
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              Navigator.pop(context);
+                                                                              Future.delayed(const Duration(milliseconds: 0), () {
+                                                                                setState(() {
+                                                                                  _isLoading = true;
+                                                                                });
+                                                                              });
+                                                                              RepairBarcode.connectToApi(token, controllerCari.text).then((valuea) {
+                                                                                Future.delayed(const Duration(milliseconds: 2000), () {
+                                                                                  setState(() {
+                                                                                    _isLoading = false;
+                                                                                  });
+                                                                                });
+                                                                                //print(storage.read(key: "token"));
+                                                                                if (valuea.status == 200) {
+                                                                                  chooseSeries = 0;
+                                                                                  _getItem();
+                                                                                  FancySnackbar.showSnackbar(
+                                                                                    context,
+                                                                                    snackBarType: FancySnackBarType.success,
+                                                                                    title: "Successfully!",
+                                                                                    message: valuea.message,
+                                                                                    duration: 1,
+                                                                                    onCloseEvent: () {},
+                                                                                  );
+
+                                                                                  DateTime dt = new DateTime.now();
+                                                                                  String formattedDate = DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
+                                                                                  String formattedTime = DateFormat('HH:mm:ss', 'id_ID').format(dt);
+                                                                                  latestDateScan = formattedDate;
+                                                                                  latestStatus = 2;
+                                                                                  latestTimeScan = formattedTime;
+                                                                                  latestBodyScan = controllerCari.text == "" ? selectedBody : controllerCari.text;
+                                                                                  controllerCari.text = "";
+
+                                                                                  setState(() {});
+                                                                                  _getItem();
+                                                                                  setState(() {});
+                                                                                } else {
+                                                                                  FancySnackbar.showSnackbar(
+                                                                                    context,
+                                                                                    snackBarType: FancySnackBarType.error,
+                                                                                    title: "Failed!",
+                                                                                    message: valuea.message,
+                                                                                    duration: 5,
+                                                                                    onCloseEvent: () {},
+                                                                                  );
+                                                                                  controllerCari.text = "";
+                                                                                  setState(() {});
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                BoxShadow(
+                                                                                  color: mTitleBlue.withOpacity(0.2),
+                                                                                  spreadRadius: 5,
+                                                                                  blurRadius: 5,
+                                                                                  offset: Offset(0, 2),
+                                                                                )
+                                                                              ], color: mTitleBlue, borderRadius: BorderRadius.circular(10)),
+                                                                              padding: EdgeInsets.all(8),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  "Repair",
+                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ));
+                                                              });
+                                                        } else {
+                                                          FancySnackbar
+                                                              .showSnackbar(
+                                                            context,
+                                                            snackBarType:
+                                                                FancySnackBarType
+                                                                    .error,
+                                                            title: "Failed!",
+                                                            message:
+                                                                value.message,
+                                                            duration: 5,
+                                                            onCloseEvent: () {},
+                                                          );
+                                                          controllerCari.text =
+                                                              "";
+                                                          setState(() {});
+                                                        }
+                                                      });
+                                                    });
+                                                  } catch (x) {
+                                                    Future.delayed(
+                                                        const Duration(
+                                                            milliseconds: 2000),
+                                                        () {
+                                                      setState(() {
+                                                        _isLoading = false;
+                                                        controllerCari.text =
+                                                            "";
+                                                        setState(() {});
+                                                      });
+                                                    });
+                                                  }
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.grey
+                                                              .withOpacity(0.2),
+                                                          spreadRadius: 5,
+                                                          blurRadius: 5,
+                                                          offset: Offset(0, 2),
+                                                        )
+                                                      ],
+                                                      color: mBlueColor,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  padding: EdgeInsets.all(8),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "Load",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+              ),
               SizedBox(
                 height: 280,
                 child: Row(
@@ -2042,8 +2919,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   message:
                                                       "Plan WOS Wajib diisi",
                                                   duration: 5,
-                                                  onCloseEvent: () {},
+                                                  onCloseEvent: () {
+                                                    setState(() {
+                                                      _isLoading = false;
+                                                    });
+                                                  },
                                                 );
+                                                setState(() {
+                                                  _isLoading = false;
+                                                });
                                                 return;
                                               }
                                               if (operationTimeController
@@ -2060,8 +2944,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   message:
                                                       "Operation Time Wajib diisi",
                                                   duration: 5,
-                                                  onCloseEvent: () {},
+                                                  onCloseEvent: () {
+                                                    setState(() {
+                                                      _isLoading = false;
+                                                    });
+                                                  },
                                                 );
+                                                setState(() {
+                                                  _isLoading = false;
+                                                });
                                                 return;
                                               }
                                               PosWos.connectToApi(
@@ -2072,7 +2963,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                       planWosController.text,
                                                       operationTimeController
                                                           .text,
-                                                      "SEALING")
+                                                      "TOPCOAT")
                                                   .then((value) {
                                                 setState(() {
                                                   Future.delayed(
@@ -2164,967 +3055,1355 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? Container()
                         : Container(
                             height: 300,
-                            child: Expanded(
-                              child: Container(
-                                height: 300,
-                                width: MediaQuery.of(context).size.width - 220,
-                                margin: const EdgeInsets.all(20),
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    color: Colors.white),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
+                            child: Container(
+                              height: 300,
+                              width: MediaQuery.of(context).size.width - 220,
+                              margin: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Colors.white),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                      child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Container(
                                           width: 500,
-                                          child: Expanded(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Container(
-                                                  padding: EdgeInsets.only(
-                                                      left: 0, top: 0),
-                                                  child: Text(
-                                                    "PART",
-                                                    textAlign: TextAlign.start,
-                                                    style: GoogleFonts.poppins(
-                                                        color: mDarkBlue,
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.w700),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(children: [
+                                                InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      if (isStorage) {
+                                                        isStorage = false;
+
+                                                        _getLoadingSeal(
+                                                            false, null);
+                                                      }
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(5),
+                                                    decoration: BoxDecoration(
+                                                        color: isStorage
+                                                            ? Colors.grey
+                                                            : Colors.green,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8)),
+                                                    child: Text(
+                                                      "OK",
+                                                      textAlign:
+                                                          TextAlign.start,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700),
+                                                    ),
                                                   ),
                                                 ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Container(
-                                                      width: 20,
-                                                      height: 20,
-                                                      decoration: BoxDecoration(
-                                                          border: Border.all(
-                                                              color: Color
-                                                                  .fromARGB(
-                                                                      255,
-                                                                      190,
-                                                                      190,
-                                                                      190)),
-                                                          color: Color.fromARGB(
-                                                              255,
-                                                              255,
-                                                              255,
-                                                              255),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      30)),
-                                                      child: InkWell(
-                                                        onTap: (resultListLoadingSeal
-                                                                            .data !=
-                                                                        null
-                                                                    ? resultListLoadingSeal
-                                                                            .data!
-                                                                            .prevPageUrl ??
-                                                                        ""
-                                                                    : "") !=
-                                                                ""
-                                                            ? () => setState(() =>
-                                                                _prevPageSeal())
-                                                            : null,
-                                                        child: Icon(
-                                                          Icons
-                                                              .arrow_back_ios_rounded,
-                                                          size: 10,
-                                                          color: (resultListLoadingSeal
-                                                                              .data !=
-                                                                          null
-                                                                      ? resultListLoadingSeal
-                                                                              .data!
-                                                                              .prevPageUrl ??
-                                                                          ""
-                                                                      : "") !=
-                                                                  ""
-                                                              ? mTitleBlue
-                                                              : Colors.grey,
-                                                        ),
-                                                      ),
+                                                SizedBox(width: 5),
+                                                InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      if (!isStorage) {
+                                                        isStorage = true;
+
+                                                        _getLoadingStorage(
+                                                            false, null);
+                                                      }
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(5),
+                                                    decoration: BoxDecoration(
+                                                        color: isStorage
+                                                            ? Colors.green
+                                                            : Colors.grey,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8)),
+                                                    child: Text(
+                                                      "STORAGE",
+                                                      textAlign:
+                                                          TextAlign.start,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700),
                                                     ),
-                                                    Container(
-                                                      margin:
-                                                          EdgeInsets.symmetric(
-                                                              horizontal: 7),
-                                                      width: 20,
-                                                      height: 20,
-                                                      decoration: BoxDecoration(
-                                                          color: mTitleBlue,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      30)),
-                                                      child: Align(
-                                                        alignment:
-                                                            Alignment.center,
+                                                  ),
+                                                ),
+                                              ]),
+                                              // Row(
+                                              //   mainAxisAlignment:
+                                              //       MainAxisAlignment.center,
+                                              //   children: [
+                                              //     Container(
+                                              //       width: 20,
+                                              //       height: 20,
+                                              //       decoration: BoxDecoration(
+                                              //           border: Border.all(
+                                              //               color: Color
+                                              //                   .fromARGB(
+                                              //                       255,
+                                              //                       190,
+                                              //                       190,
+                                              //                       190)),
+                                              //           color: Color.fromARGB(
+                                              //               255,
+                                              //               255,
+                                              //               255,
+                                              //               255),
+                                              //           borderRadius:
+                                              //               BorderRadius
+                                              //                   .circular(
+                                              //                       30)),
+                                              //       child: InkWell(
+                                              //         onTap: (!isStorage
+                                              //                     ? (resultListLoadingSeal.data !=
+                                              //                             null
+                                              //                         ? resultListLoadingSeal.data!.prevPageUrl ??
+                                              //                             ""
+                                              //                         : "")
+                                              //                     : (resultListLoadingStorage.data !=
+                                              //                             null
+                                              //                         ? resultListLoadingStorage.data!.prevPageUrl ??
+                                              //                             ""
+                                              //                         : "")) !=
+                                              //                 ""
+                                              //             ? () => setState(
+                                              //                 () => isStorage
+                                              //                     ? _prevPageStorage()
+                                              //                     : _prevPageSeal())
+                                              //             : null,
+                                              //         child: Icon(
+                                              //           Icons
+                                              //               .arrow_back_ios_rounded,
+                                              //           size: 10,
+                                              //           color: (isStorage
+                                              //                       ? (resultListLoadingStorage.data !=
+                                              //                               null
+                                              //                           ? resultListLoadingStorage.data!.prevPageUrl ??
+                                              //                               ""
+                                              //                           : "")
+                                              //                       : (resultListLoadingSeal.data !=
+                                              //                               null
+                                              //                           ? resultListLoadingSeal.data!.prevPageUrl ??
+                                              //                               ""
+                                              //                           : "")) !=
+                                              //                   ""
+                                              //               ? mTitleBlue
+                                              //               : Colors.grey,
+                                              //         ),
+                                              //       ),
+                                              //     ),
+                                              //     Container(
+                                              //       margin:
+                                              //           EdgeInsets.symmetric(
+                                              //               horizontal: 7),
+                                              //       width: 20,
+                                              //       height: 20,
+                                              //       decoration: BoxDecoration(
+                                              //           color: mTitleBlue,
+                                              //           borderRadius:
+                                              //               BorderRadius
+                                              //                   .circular(
+                                              //                       30)),
+                                              //       child: Align(
+                                              //         alignment:
+                                              //             Alignment.center,
+                                              //         child: Text(
+                                              //           isStorage
+                                              //               ? ("${resultListLoadingStorage.data != null ? resultListLoadingStorage.data!.currentPage.toString() : ""}")
+                                              //               : ("${resultListLoadingSeal.data != null ? resultListLoadingSeal.data!.currentPage.toString() : ""}"),
+                                              //           textAlign:
+                                              //               TextAlign.center,
+                                              //           style: GoogleFonts
+                                              //               .poppins(
+                                              //                   color: Colors
+                                              //                       .white,
+                                              //                   fontSize: 11,
+                                              //                   fontWeight:
+                                              //                       FontWeight
+                                              //                           .w600),
+                                              //         ),
+                                              //       ),
+                                              //     ),
+                                              //     Container(
+                                              //       width: 20,
+                                              //       height: 20,
+                                              //       decoration: BoxDecoration(
+                                              //           border: Border.all(
+                                              //               color: Color
+                                              //                   .fromARGB(
+                                              //                       255,
+                                              //                       190,
+                                              //                       190,
+                                              //                       190)),
+                                              //           color: Color.fromARGB(
+                                              //               255,
+                                              //               255,
+                                              //               255,
+                                              //               255),
+                                              //           borderRadius:
+                                              //               BorderRadius
+                                              //                   .circular(
+                                              //                       30)),
+                                              //       child: InkWell(
+                                              //         onTap: (isStorage
+                                              //                     ? (resultListLoadingStorage.data !=
+                                              //                             null
+                                              //                         ? resultListLoadingStorage.data!.nextPageUrl ??
+                                              //                             ""
+                                              //                         : "")
+                                              //                     : (resultListLoadingSeal.data !=
+                                              //                             null
+                                              //                         ? resultListLoadingSeal.data!.nextPageUrl ??
+                                              //                             ""
+                                              //                         : "")) !=
+                                              //                 ""
+                                              //             ? () => setState(
+                                              //                 () => isStorage
+                                              //                     ? _nextPageStorage()
+                                              //                     : _nextPageSeal())
+                                              //             : null,
+                                              //         child: Icon(
+                                              //           Icons
+                                              //               .arrow_forward_ios_rounded,
+                                              //           size: 10,
+                                              //           color: (isStorage
+                                              //                       ? (resultListLoadingStorage.data !=
+                                              //                               null
+                                              //                           ? resultListLoadingStorage.data!.nextPageUrl ??
+                                              //                               ""
+                                              //                           : "")
+                                              //                       : (resultListLoadingSeal.data !=
+                                              //                               null
+                                              //                           ? resultListLoadingSeal.data!.nextPageUrl ??
+                                              //                               ""
+                                              //                           : "")) !=
+                                              //                   ""
+                                              //               ? mTitleBlue
+                                              //               : Colors.grey,
+                                              //         ),
+                                              //       ),
+                                              //     ),
+                                              //   ],
+                                              // ),
+                                              Container(
+                                                  width: 209,
+                                                  padding: EdgeInsets.symmetric(
+                                                      // horizontal: 5,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFFF4F7FE),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            40),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Color.fromARGB(
+                                                            134, 244, 247, 254),
+                                                        spreadRadius: 1,
+                                                        blurRadius: 1,
+                                                        offset: Offset(0, 1),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      SearchInput(
+                                                        width: 209,
+                                                        controller:
+                                                            controllerSearchLoadingSeal,
+                                                        nama: "search",
+                                                        onclick: () {
+                                                          if (isStorage) {
+                                                            _getLoadingStorage(
+                                                                true, null);
+                                                          } else {
+                                                            _getLoadingSeal(
+                                                                true, null);
+                                                          }
+                                                        },
+                                                        icons: Icons.search,
+                                                      ),
+                                                    ],
+                                                  )),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 500,
+                                        margin: EdgeInsets.symmetric(
+                                            horizontal: 10),
+                                        // color: Colors.white,
+                                        padding: EdgeInsets.all(3),
+                                        decoration: BoxDecoration(
+                                            color: Color.fromARGB(
+                                                255, 255, 255, 255),
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              width: 20,
+                                              child: Text(
+                                                "No",
+                                                textAlign: TextAlign.start,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.grey,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 100,
+                                              child: Text(
+                                                "Date",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.grey,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 150,
+                                              child: Text(
+                                                "No.  Body",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.grey,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 100,
+                                              child: Text(
+                                                "Variant",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.grey,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 100,
+                                              child: Text(
+                                                "Aksi",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.grey,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Divider(
+                                        height: 2,
+                                      ),
+                                      Container(
+                                        height: 130,
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: List.generate(
+                                                  isStorage
+                                                      ? (resultListLoadingStorage
+                                                                  .data !=
+                                                              null
+                                                          ? (resultListLoadingStorage
+                                                                      .data!
+                                                                      .data !=
+                                                                  null
+                                                              ? resultListLoadingStorage
+                                                                  .data!.data!.length
+                                                              : 0)
+                                                          : 0)
+                                                      : (resultListLoadingSeal
+                                                                  .data !=
+                                                              null
+                                                          ? (resultListLoadingSeal
+                                                                      .data!
+                                                                      .data !=
+                                                                  null
+                                                              ? resultListLoadingSeal
+                                                                  .data!
+                                                                  .data!
+                                                                  .length
+                                                              : 0)
+                                                          : 0), (index) {
+                                                final item = isStorage
+                                                    ? null
+                                                    : resultListLoadingSeal
+                                                        .data!.data![index];
+                                                final itemStorage = isStorage
+                                                    ? resultListLoadingStorage
+                                                        .data!.data![index]
+                                                    : null;
+                                                return Container(
+                                                  width: 500,
+                                                  margin: EdgeInsets.only(
+                                                      bottom: 5),
+                                                  padding: EdgeInsets.all(3),
+                                                  decoration: BoxDecoration(
+                                                      color: Color.fromARGB(
+                                                          255, 255, 255, 255),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Container(
+                                                        width: 30,
                                                         child: Text(
-                                                          "${resultListLoadingSeal.data != null ? resultListLoadingSeal.data!.currentPage.toString() : ""}",
+                                                          isStorage
+                                                              ? (((resultListLoadingStorage.data!.currentPage! -
+                                                                              1) *
+                                                                          4) +
+                                                                      (index +
+                                                                          1))
+                                                                  .toString()
+                                                              : (((resultListLoadingSeal.data!.currentPage! -
+                                                                              1) *
+                                                                          4) +
+                                                                      (index +
+                                                                          1))
+                                                                  .toString(),
                                                           textAlign:
-                                                              TextAlign.center,
+                                                              TextAlign.start,
                                                           style: GoogleFonts
                                                               .poppins(
-                                                                  color: Colors
-                                                                      .white,
+                                                                  color:
+                                                                      mDarkBlue,
                                                                   fontSize: 11,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w600),
                                                         ),
                                                       ),
-                                                    ),
-                                                    Container(
-                                                      width: 20,
-                                                      height: 20,
-                                                      decoration: BoxDecoration(
-                                                          border: Border.all(
-                                                              color: Color
-                                                                  .fromARGB(
-                                                                      255,
-                                                                      190,
-                                                                      190,
-                                                                      190)),
-                                                          color: Color.fromARGB(
-                                                              255,
-                                                              255,
-                                                              255,
-                                                              255),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      30)),
-                                                      child: InkWell(
-                                                        onTap: (resultListLoadingSeal
-                                                                            .data !=
-                                                                        null
-                                                                    ? resultListLoadingSeal
-                                                                            .data!
-                                                                            .nextPageUrl ??
-                                                                        ""
-                                                                    : "") !=
-                                                                ""
-                                                            ? () => setState(() =>
-                                                                _nextPageSeal())
-                                                            : null,
-                                                        child: Icon(
-                                                          Icons
-                                                              .arrow_forward_ios_rounded,
-                                                          size: 10,
-                                                          color: (resultListLoadingSeal
-                                                                              .data !=
-                                                                          null
-                                                                      ? resultListLoadingSeal
-                                                                              .data!
-                                                                              .nextPageUrl ??
-                                                                          ""
-                                                                      : "") !=
-                                                                  ""
-                                                              ? mTitleBlue
-                                                              : Colors.grey,
+                                                      Container(
+                                                        width: 100,
+                                                        child: Text(
+                                                          isStorage
+                                                              ? itemStorage ==
+                                                                      null
+                                                                  ? ""
+                                                                  : itemStorage
+                                                                      .timeOut
+                                                              : item == null
+                                                                  ? ""
+                                                                  : item.date,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  color:
+                                                                      mDarkBlue,
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
                                                         ),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Container(
-                                                    width: 209,
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            // horizontal: 5,
-                                                            ),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                          0xFFF4F7FE),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              40),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Color.fromARGB(
-                                                              134,
-                                                              244,
-                                                              247,
-                                                              254),
-                                                          spreadRadius: 1,
-                                                          blurRadius: 1,
-                                                          offset: Offset(0, 1),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        SearchInput(
-                                                          width: 209,
-                                                          controller:
-                                                              controllerSearchLoadingSeal,
-                                                          nama: "search",
-                                                          onclick: () {
-                                                            _getLoadingSeal(
-                                                                true, null);
-                                                          },
-                                                          icons: Icons.search,
+                                                      Container(
+                                                        width: 150,
+                                                        child: Text(
+                                                          isStorage
+                                                              ? itemStorage ==
+                                                                      null
+                                                                  ? ""
+                                                                  : itemStorage
+                                                                      .bodyId
+                                                              : item == null
+                                                                  ? ""
+                                                                  : item.bodyId,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  color:
+                                                                      mDarkBlue,
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
                                                         ),
-                                                      ],
-                                                    )),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 500,
-                                          margin: EdgeInsets.symmetric(
-                                              horizontal: 10),
-                                          // color: Colors.white,
-                                          padding: EdgeInsets.all(3),
-                                          decoration: BoxDecoration(
-                                              color: Color.fromARGB(
-                                                  255, 255, 255, 255),
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                width: 20,
-                                                child: Text(
-                                                  "No",
-                                                  textAlign: TextAlign.start,
-                                                  style: GoogleFonts.poppins(
-                                                      color: Colors.grey,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: 100,
-                                                child: Text(
-                                                  "Date",
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.poppins(
-                                                      color: Colors.grey,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: 150,
-                                                child: Text(
-                                                  "No.  Body",
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.poppins(
-                                                      color: Colors.grey,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: 100,
-                                                child: Text(
-                                                  "Variant",
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.poppins(
-                                                      color: Colors.grey,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: 100,
-                                                child: Text(
-                                                  "Aksi",
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.poppins(
-                                                      color: Colors.grey,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Divider(
-                                          height: 2,
-                                        ),
-                                        Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: List.generate(
-                                                resultListLoadingSeal.data !=
-                                                        null
-                                                    ? (resultListLoadingSeal
-                                                                .data!.data !=
-                                                            null
-                                                        ? resultListLoadingSeal
-                                                            .data!.data!.length
-                                                        : 0)
-                                                    : 0, (index) {
-                                              final item = resultListLoadingSeal
-                                                  .data!.data![index];
-                                              return Container(
-                                                width: 500,
-                                                margin:
-                                                    EdgeInsets.only(bottom: 5),
-                                                padding: EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                    color: Color.fromARGB(
-                                                        255, 255, 255, 255),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    Container(
-                                                      width: 30,
-                                                      child: Text(
-                                                        (((resultListLoadingSeal
-                                                                            .data!
-                                                                            .currentPage! -
-                                                                        1) *
-                                                                    5) +
-                                                                (index + 1))
-                                                            .toString(),
-                                                        textAlign:
-                                                            TextAlign.start,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
                                                       ),
-                                                    ),
-                                                    Container(
-                                                      width: 100,
-                                                      child: Text(
-                                                        item.date,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
+                                                      Container(
+                                                        width: 100,
+                                                        child: Text(
+                                                          isStorage
+                                                              ? itemStorage ==
+                                                                      null
+                                                                  ? ""
+                                                                  : itemStorage
+                                                                      .variant
+                                                              : item == null
+                                                                  ? ""
+                                                                  : item
+                                                                      .bodyType,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  color:
+                                                                      mDarkBlue,
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Container(
-                                                      width: 150,
-                                                      child: Text(
-                                                        item.bodyId,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      width: 100,
-                                                      child: Text(
-                                                        item.bodyType,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                      ),
-                                                    ),
-                                                    // Container(
-                                                    //   width: windowWidth / 8,
-                                                    //   child: Text(
-                                                    //     item.operationTime,
-                                                    //     textAlign: TextAlign.center,
-                                                    //     style: GoogleFonts.poppins(
-                                                    //         color: mDarkBlue,
-                                                    //         fontSize: 9,
-                                                    //         fontWeight: FontWeight.w600),
-                                                    //   ),
-                                                    // ),
-                                                    Container(
-                                                      width: 100,
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          InkWell(
-                                                            onTap: () async {
-                                                              if (_isLoading) {
-                                                                return;
-                                                              }
-                                                              try {
-                                                                token = await storage
-                                                                        .read(
+                                                      // Container(
+                                                      //   width: windowWidth / 8,
+                                                      //   child: Text(
+                                                      //     item.operationTime,
+                                                      //     textAlign: TextAlign.center,
+                                                      //     style: GoogleFonts.poppins(
+                                                      //         color: mDarkBlue,
+                                                      //         fontSize: 9,
+                                                      //         fontWeight: FontWeight.w600),
+                                                      //   ),
+                                                      // ),
+                                                      Container(
+                                                        width: 100,
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () async {
+                                                                if (_isLoading) {
+                                                                  return;
+                                                                }
+                                                                konfirmasiDialog(
+                                                                    isStorage
+                                                                        ? itemStorage ==
+                                                                                null
+                                                                            ? ""
+                                                                            : itemStorage
+                                                                                .bodyId
+                                                                        : item ==
+                                                                                null
+                                                                            ? ""
+                                                                            : item
+                                                                                .bodyId,
+                                                                    isStorage
+                                                                        ? itemStorage ==
+                                                                                null
+                                                                            ? ""
+                                                                            : itemStorage
+                                                                                .variant
+                                                                        : item ==
+                                                                                null
+                                                                            ? ""
+                                                                            : item
+                                                                                .bodyType,
+                                                                    context,
+                                                                    () async {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  try {
+                                                                    token = await storage.read(
                                                                             key:
                                                                                 "token") ??
-                                                                    "";
+                                                                        "";
 
-                                                                Future.delayed(
-                                                                    const Duration(
-                                                                        milliseconds:
-                                                                            0),
-                                                                    () {
-                                                                  setState(() {
-                                                                    _isLoading =
-                                                                        true;
-                                                                  });
-                                                                });
-                                                                PostSeal.connectToApi(
-                                                                        token,
-                                                                        item
-                                                                            .bodyId,
-                                                                        item
-                                                                            .bodyType)
-                                                                    .then(
-                                                                        (value) {
-                                                                  setState(() {
                                                                     Future.delayed(
                                                                         const Duration(
                                                                             milliseconds:
-                                                                                2000),
+                                                                                0),
                                                                         () {
                                                                       setState(
                                                                           () {
                                                                         _isLoading =
-                                                                            false;
+                                                                            true;
                                                                       });
                                                                     });
-                                                                    //print(storage.read(key: "token"));
-                                                                    if (value.status ==
-                                                                            200 &&
-                                                                        value.type ==
-                                                                            "complete") {
-                                                                      FancySnackbar
-                                                                          .showSnackbar(
-                                                                        context,
-                                                                        snackBarType:
-                                                                            FancySnackBarType.success,
-                                                                        title:
-                                                                            "Successfully!",
-                                                                        message:
-                                                                            value.message,
-                                                                        duration:
-                                                                            1,
-                                                                        onCloseEvent:
-                                                                            () {},
-                                                                      );
-
-                                                                      DateTime
-                                                                          dt =
-                                                                          new DateTime
-                                                                              .now();
-                                                                      String formattedDate = DateFormat(
-                                                                              'dd MMMM yyyy',
-                                                                              'id_ID')
-                                                                          .format(
-                                                                              dt);
-                                                                      String formattedTime = DateFormat(
-                                                                              'HH:mm:ss',
-                                                                              'id_ID')
-                                                                          .format(
-                                                                              dt);
-                                                                      latestDateScan =
-                                                                          formattedDate;
-                                                                      latestTimeScan =
-                                                                          formattedTime;
-                                                                      latestBodyScan =
-                                                                          item.bodyId;
-                                                                      controllerSearchLoadingSeal
-                                                                          .text = "";
-
+                                                                    PostSeal.connectToApi(
+                                                                            token,
+                                                                            isStorage
+                                                                                ? itemStorage == null
+                                                                                    ? ""
+                                                                                    : itemStorage.bodyId
+                                                                                : item == null
+                                                                                    ? ""
+                                                                                    : item.bodyId,
+                                                                            isStorage
+                                                                                ? itemStorage == null
+                                                                                    ? ""
+                                                                                    : itemStorage.variant
+                                                                                : item == null
+                                                                                    ? ""
+                                                                                    : item.bodyType)
+                                                                        .then((value) {
                                                                       setState(
-                                                                          () {});
-                                                                      _getLoadingSeal(
-                                                                          false,
-                                                                          null);
-                                                                      setState(
-                                                                          () {});
-                                                                    } else if (value.status ==
-                                                                            200 &&
-                                                                        value.type ==
-                                                                            "confirm") {
-                                                                      showDialog(
-                                                                          barrierDismissible:
-                                                                              true,
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (dialogcontext) {
-                                                                            return AlertDialog(
-                                                                                content: Column(
-                                                                              mainAxisSize: MainAxisSize.min,
-                                                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                                                              children: [
-                                                                                // Lottie.asset(
-                                                                                //     'assets/json/loadingBlue.json',
-                                                                                //     height: 100,
-                                                                                //     width: 100),
-                                                                                SizedBox(
-                                                                                  height: 20,
-                                                                                ),
-                                                                                Text(
-                                                                                  value.message,
-                                                                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 17, color: Color.fromARGB(255, 75, 75, 75)),
-                                                                                ),
-                                                                                SizedBox(
-                                                                                  height: 50,
-                                                                                ),
-                                                                                Row(
+                                                                          () {
+                                                                        Future.delayed(
+                                                                            const Duration(milliseconds: 2000),
+                                                                            () {
+                                                                          setState(
+                                                                              () {
+                                                                            _isLoading =
+                                                                                false;
+                                                                          });
+                                                                        });
+                                                                        //print(storage.read(key: "token"));
+                                                                        if (value.status ==
+                                                                                200 &&
+                                                                            value.type ==
+                                                                                "complete") {
+                                                                          FancySnackbar
+                                                                              .showSnackbar(
+                                                                            context,
+                                                                            snackBarType:
+                                                                                FancySnackBarType.success,
+                                                                            title:
+                                                                                "Successfully!",
+                                                                            message:
+                                                                                value.message,
+                                                                            duration:
+                                                                                1,
+                                                                            onCloseEvent:
+                                                                                () {},
+                                                                          );
+
+                                                                          DateTime
+                                                                              dt =
+                                                                              new DateTime.now();
+                                                                          String
+                                                                              formattedDate =
+                                                                              DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
+                                                                          String
+                                                                              formattedTime =
+                                                                              DateFormat('HH:mm:ss', 'id_ID').format(dt);
+                                                                          latestDateScan =
+                                                                              formattedDate;
+                                                                          latestTimeScan =
+                                                                              formattedTime;
+                                                                          latestBodyScan = isStorage
+                                                                              ? itemStorage == null
+                                                                                  ? ""
+                                                                                  : itemStorage.bodyId
+                                                                              : item == null
+                                                                                  ? ""
+                                                                                  : item.bodyId;
+                                                                          controllerSearchLoadingSeal.text =
+                                                                              "";
+
+                                                                          setState(
+                                                                              () {});
+                                                                          _getLoadingSeal(
+                                                                              false,
+                                                                              null);
+                                                                          setState(
+                                                                              () {});
+                                                                        } else if (value.status ==
+                                                                                200 &&
+                                                                            value.type ==
+                                                                                "confirm") {
+                                                                          showDialog(
+                                                                              barrierDismissible: true,
+                                                                              context: context,
+                                                                              builder: (dialogcontext) {
+                                                                                return AlertDialog(
+                                                                                    content: Column(
+                                                                                  mainAxisSize: MainAxisSize.min,
+                                                                                  crossAxisAlignment: CrossAxisAlignment.center,
                                                                                   children: [
-                                                                                    Expanded(
-                                                                                      child: InkWell(
-                                                                                        onTap: () async {
-                                                                                          Navigator.pop(dialogcontext);
-                                                                                        },
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(boxShadow: [
-                                                                                            BoxShadow(
-                                                                                              color: Colors.grey.withOpacity(0.2),
-                                                                                              spreadRadius: 5,
-                                                                                              blurRadius: 5,
-                                                                                              offset: Offset(0, 2),
-                                                                                            )
-                                                                                          ], color: Color.fromARGB(255, 107, 107, 107), borderRadius: BorderRadius.circular(10)),
-                                                                                          padding: EdgeInsets.all(8),
-                                                                                          child: Center(
-                                                                                            child: Text(
-                                                                                              "Cancel",
-                                                                                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
-                                                                                            ),
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
+                                                                                    // Lottie.asset(
+                                                                                    //     'assets/json/loadingBlue.json',
+                                                                                    //     height: 100,
+                                                                                    //     width: 100),
+                                                                                    SizedBox(
+                                                                                      height: 20,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      value.message,
+                                                                                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 17, color: Color.fromARGB(255, 75, 75, 75)),
                                                                                     ),
                                                                                     SizedBox(
-                                                                                      width: 20,
+                                                                                      height: 50,
                                                                                     ),
-                                                                                    Expanded(
-                                                                                      child: InkWell(
-                                                                                        onTap: () async {
-                                                                                          Navigator.pop(context);
-                                                                                          Future.delayed(const Duration(milliseconds: 0), () {
-                                                                                            setState(() {
-                                                                                              _isLoading = true;
-                                                                                            });
-                                                                                          });
-                                                                                          RepairBarcode.connectToApi(token, item.bodyId).then((valuea) {
-                                                                                            Future.delayed(const Duration(milliseconds: 2000), () {
-                                                                                              setState(() {
-                                                                                                _isLoading = false;
-                                                                                              });
-                                                                                            });
-                                                                                            //print(storage.read(key: "token"));
-                                                                                            if (valuea.status == 200) {
-                                                                                              FancySnackbar.showSnackbar(
-                                                                                                context,
-                                                                                                snackBarType: FancySnackBarType.success,
-                                                                                                title: "Successfully!",
-                                                                                                message: valuea.message,
-                                                                                                duration: 1,
-                                                                                                onCloseEvent: () {},
-                                                                                              );
-
-                                                                                              DateTime dt = new DateTime.now();
-                                                                                              String formattedDate = DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
-                                                                                              String formattedTime = DateFormat('HH:mm:ss', 'id_ID').format(dt);
-
-                                                                                              latestDateScan = formattedDate;
-                                                                                              latestTimeScan = formattedTime;
-                                                                                              latestBodyScan = item.bodyId;
-                                                                                              controllerSearchLoadingSeal.text = "";
-
-                                                                                              setState(() {});
-                                                                                              _getLoadingSeal(false, null);
-                                                                                              setState(() {});
-                                                                                            } else {
-                                                                                              FancySnackbar.showSnackbar(
-                                                                                                context,
-                                                                                                snackBarType: FancySnackBarType.error,
-                                                                                                title: "Failed!",
-                                                                                                message: valuea.message,
-                                                                                                duration: 5,
-                                                                                                onCloseEvent: () {},
-                                                                                              );
-                                                                                              controllerSearchLoadingSeal.text = "";
-                                                                                              setState(() {});
-                                                                                            }
-                                                                                          });
-                                                                                        },
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(boxShadow: [
-                                                                                            BoxShadow(
-                                                                                              color: mTitleBlue.withOpacity(0.2),
-                                                                                              spreadRadius: 5,
-                                                                                              blurRadius: 5,
-                                                                                              offset: Offset(0, 2),
-                                                                                            )
-                                                                                          ], color: mTitleBlue, borderRadius: BorderRadius.circular(10)),
-                                                                                          padding: EdgeInsets.all(8),
-                                                                                          child: Center(
-                                                                                            child: Text(
-                                                                                              "Submit",
-                                                                                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                    Row(
+                                                                                      children: [
+                                                                                        Expanded(
+                                                                                          child: InkWell(
+                                                                                            onTap: () async {
+                                                                                              Navigator.pop(dialogcontext);
+                                                                                            },
+                                                                                            child: Container(
+                                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                                BoxShadow(
+                                                                                                  color: Colors.grey.withOpacity(0.2),
+                                                                                                  spreadRadius: 5,
+                                                                                                  blurRadius: 5,
+                                                                                                  offset: Offset(0, 2),
+                                                                                                )
+                                                                                              ], color: Color.fromARGB(255, 107, 107, 107), borderRadius: BorderRadius.circular(10)),
+                                                                                              padding: EdgeInsets.all(8),
+                                                                                              child: Center(
+                                                                                                child: Text(
+                                                                                                  "Cancel",
+                                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                                ),
+                                                                                              ),
                                                                                             ),
                                                                                           ),
                                                                                         ),
-                                                                                      ),
+                                                                                        SizedBox(
+                                                                                          width: 20,
+                                                                                        ),
+                                                                                        Expanded(
+                                                                                          child: InkWell(
+                                                                                            onTap: () async {
+                                                                                              Navigator.pop(context);
+                                                                                              Future.delayed(const Duration(milliseconds: 0), () {
+                                                                                                setState(() {
+                                                                                                  _isLoading = true;
+                                                                                                });
+                                                                                              });
+                                                                                              RepairBarcode.connectToApi(
+                                                                                                      token,
+                                                                                                      isStorage
+                                                                                                          ? itemStorage == null
+                                                                                                              ? ""
+                                                                                                              : itemStorage.bodyId
+                                                                                                          : item == null
+                                                                                                              ? ""
+                                                                                                              : item.bodyId)
+                                                                                                  .then((valuea) {
+                                                                                                Future.delayed(const Duration(milliseconds: 2000), () {
+                                                                                                  setState(() {
+                                                                                                    _isLoading = false;
+                                                                                                  });
+                                                                                                });
+                                                                                                //print(storage.read(key: "token"));
+                                                                                                if (valuea.status == 200) {
+                                                                                                  FancySnackbar.showSnackbar(
+                                                                                                    context,
+                                                                                                    snackBarType: FancySnackBarType.success,
+                                                                                                    title: "Successfully!",
+                                                                                                    message: valuea.message,
+                                                                                                    duration: 1,
+                                                                                                    onCloseEvent: () {},
+                                                                                                  );
+
+                                                                                                  DateTime dt = new DateTime.now();
+                                                                                                  String formattedDate = DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
+                                                                                                  String formattedTime = DateFormat('HH:mm:ss', 'id_ID').format(dt);
+
+                                                                                                  latestDateScan = formattedDate;
+                                                                                                  latestTimeScan = formattedTime;
+                                                                                                  latestBodyScan = isStorage
+                                                                                                      ? itemStorage == null
+                                                                                                          ? ""
+                                                                                                          : itemStorage.bodyId
+                                                                                                      : item == null
+                                                                                                          ? ""
+                                                                                                          : item.bodyId;
+                                                                                                  controllerSearchLoadingSeal.text = "";
+
+                                                                                                  _getItem();
+                                                                                                  _getLoadingSeal(false, null);
+                                                                                                } else {
+                                                                                                  FancySnackbar.showSnackbar(
+                                                                                                    context,
+                                                                                                    snackBarType: FancySnackBarType.error,
+                                                                                                    title: "Failed!",
+                                                                                                    message: valuea.message,
+                                                                                                    duration: 5,
+                                                                                                    onCloseEvent: () {},
+                                                                                                  );
+                                                                                                  controllerSearchLoadingSeal.text = "";
+                                                                                                  setState(() {});
+                                                                                                }
+                                                                                              });
+                                                                                            },
+                                                                                            child: Container(
+                                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                                BoxShadow(
+                                                                                                  color: mTitleBlue.withOpacity(0.2),
+                                                                                                  spreadRadius: 5,
+                                                                                                  blurRadius: 5,
+                                                                                                  offset: Offset(0, 2),
+                                                                                                )
+                                                                                              ], color: mTitleBlue, borderRadius: BorderRadius.circular(10)),
+                                                                                              padding: EdgeInsets.all(8),
+                                                                                              child: Center(
+                                                                                                child: Text(
+                                                                                                  "Submit",
+                                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                                ),
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
                                                                                     ),
                                                                                   ],
-                                                                                ),
-                                                                              ],
-                                                                            ));
-                                                                          });
-                                                                    } else {
-                                                                      FancySnackbar
-                                                                          .showSnackbar(
-                                                                        context,
-                                                                        snackBarType:
-                                                                            FancySnackBarType.error,
-                                                                        title:
-                                                                            "Failed!",
-                                                                        message:
-                                                                            value.message,
-                                                                        duration:
-                                                                            5,
-                                                                        onCloseEvent:
-                                                                            () {},
-                                                                      );
-                                                                      controllerSearchLoadingSeal
-                                                                          .text = "";
-                                                                      setState(
-                                                                          () {});
-                                                                    }
-                                                                  });
+                                                                                ));
+                                                                              });
+                                                                        } else {
+                                                                          FancySnackbar
+                                                                              .showSnackbar(
+                                                                            context,
+                                                                            snackBarType:
+                                                                                FancySnackBarType.error,
+                                                                            title:
+                                                                                "Failed!",
+                                                                            message:
+                                                                                value.message,
+                                                                            duration:
+                                                                                5,
+                                                                            onCloseEvent:
+                                                                                () {},
+                                                                          );
+                                                                          controllerSearchLoadingSeal.text =
+                                                                              "";
+                                                                          setState(
+                                                                              () {});
+                                                                        }
+                                                                      });
+                                                                    });
+                                                                  } catch (x) {
+                                                                    FancySnackbar
+                                                                        .showSnackbar(
+                                                                      context,
+                                                                      snackBarType:
+                                                                          FancySnackBarType
+                                                                              .error,
+                                                                      title:
+                                                                          "Failed!",
+                                                                      message: x
+                                                                          .toString(),
+                                                                      duration:
+                                                                          5,
+                                                                      onCloseEvent:
+                                                                          () {},
+                                                                    );
+                                                                  }
                                                                 });
-                                                              } catch (x) {
-                                                                FancySnackbar
-                                                                    .showSnackbar(
-                                                                  context,
-                                                                  snackBarType:
-                                                                      FancySnackBarType
-                                                                          .error,
-                                                                  title:
-                                                                      "Failed!",
-                                                                  message: x
-                                                                      .toString(),
-                                                                  duration: 5,
-                                                                  onCloseEvent:
-                                                                      () {},
-                                                                );
-                                                              }
-                                                            },
-                                                            child: Container(
-                                                              padding: EdgeInsets
-                                                                  .symmetric(
-                                                                      vertical:
-                                                                          2,
-                                                                      horizontal:
-                                                                          8),
-                                                              decoration: BoxDecoration(
-                                                                  color: !_isLoading
-                                                                      ? Color.fromARGB(
-                                                                          255,
-                                                                          129,
-                                                                          218,
-                                                                          88)
-                                                                      : const Color
+                                                              },
+                                                              child: Container(
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        vertical:
+                                                                            2,
+                                                                        horizontal:
+                                                                            8),
+                                                                decoration: BoxDecoration(
+                                                                    color: !_isLoading
+                                                                        ? Color.fromARGB(
+                                                                            255,
+                                                                            129,
+                                                                            218,
+                                                                            88)
+                                                                        : const Color.fromARGB(
+                                                                            255,
+                                                                            202,
+                                                                            202,
+                                                                            202),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            4)),
+                                                                child: Text(
+                                                                  "SUBMIT",
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .start,
+                                                                  style: GoogleFonts.poppins(
+                                                                      color: const Color
                                                                               .fromARGB(
                                                                           255,
-                                                                          202,
-                                                                          202,
-                                                                          202),
+                                                                          44,
+                                                                          44,
+                                                                          44),
+                                                                      fontSize:
+                                                                          13,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                );
+                                              })),
+                                        ),
+                                      ),
+                                    ],
+                                  )),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                "Latest Scanned",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.black,
+                                                    fontSize: windowWidth < 1400
+                                                        ? 14
+                                                        : 18,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  if (resultShift.data !=
+                                                      null) {
+                                                    DateTime parsedDate = DateFormat(
+                                                            'dd MMMM yyyy')
+                                                        .parse(dashboardResult
+                                                                .data
+                                                                ?.formatted_date ??
+                                                            "05 Januari 2024");
+                                                    formattedDate = formatter
+                                                        .format(parsedDate);
+                                                    planWosController.text =
+                                                        dashboardResult
+                                                                .data?.planWos
+                                                                .toString() ??
+                                                            "";
+                                                    selectedShift = resultShift
+                                                        .data!
+                                                        .firstWhere((shift) =>
+                                                            shift.id ==
+                                                            dashboardResult
+                                                                .data?.shiftId);
+                                                    selectedOperationTime =
+                                                        resultOperationTime
+                                                            .data!
+                                                            .firstWhere((shift) =>
+                                                                shift.value ==
+                                                                dashboardResult
+                                                                    .data
+                                                                    ?.operationTime
+                                                                    .toString());
+                                                    operationTimeController
+                                                            .text =
+                                                        selectedOperationTime
+                                                                .value ??
+                                                            "";
+                                                  }
+                                                  showDialog(
+                                                      barrierDismissible: true,
+                                                      context: context,
+                                                      builder: (BuildContext
+                                                          dialogcontext) {
+                                                        return StatefulBuilder(
+                                                          builder: (BuildContext
+                                                                      dialogcontext,
+                                                                  setState) =>
+                                                              AlertDialog(
+                                                            content: Container(
+                                                              height: 250,
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width /
+                                                                  2.5,
+                                                              margin:
+                                                                  const EdgeInsets
+                                                                      .all(20),
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(20),
+                                                              decoration: BoxDecoration(
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              4)),
-                                                              child: Text(
-                                                                "SUBMIT",
-                                                                textAlign:
-                                                                    TextAlign
+                                                                              20),
+                                                                  color: Colors
+                                                                      .white),
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
                                                                         .start,
-                                                                style: GoogleFonts.poppins(
-                                                                    color: const Color
-                                                                            .fromARGB(
-                                                                        255,
-                                                                        44,
-                                                                        44,
-                                                                        44),
-                                                                    fontSize:
-                                                                        13,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              );
-                                            })),
-                                      ],
-                                    )),
-                                    Expanded(
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 20),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Latest Scanned",
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.poppins(
-                                                  color: Colors.black,
-                                                  fontSize: windowWidth < 1400
-                                                      ? 14
-                                                      : 18,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                            SizedBox(
-                                              height: 15,
-                                            ),
-                                            Expanded(
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        latestDateScan,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize:
-                                                                    windowWidth <
-                                                                            1400
-                                                                        ? 12
-                                                                        : 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                      ),
-                                                      Text(
-                                                        latestTimeScan,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize:
-                                                                    windowWidth <
-                                                                            1400
-                                                                        ? 12
-                                                                        : 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          // Text(
-                                                          //   "",
-                                                          //   textAlign: TextAlign.center,
-                                                          //   style: GoogleFonts.poppins(
-                                                          //       color: mDarkBlue,
-                                                          //       fontSize:
-                                                          //           windowWidth < 1400
-                                                          //               ? 25
-                                                          //               : 35,
-                                                          //       fontWeight:
-                                                          //           FontWeight.w800),
-                                                          // ),
-                                                          Text(
-                                                            latestBodyScan,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: GoogleFonts.poppins(
-                                                                color:
-                                                                    mDarkBlue,
-                                                                fontSize:
-                                                                    windowWidth <
-                                                                            1400
-                                                                        ? 25
-                                                                        : 25,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w800),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        width: 20,
-                                                      ),
-                                                      Expanded(
-                                                        child: InkWell(
-                                                          onTap: () async {
-                                                            showDialog(
-                                                                barrierDismissible:
-                                                                    true,
-                                                                context:
-                                                                    context,
-                                                                builder:
-                                                                    (dialogcontext) {
-                                                                  return AlertDialog(
-                                                                      content:
-                                                                          Column(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .min,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
+                                                                children: [
+                                                                  Text(
+                                                                    "Edit data WOS production",
+                                                                    textAlign:
+                                                                        TextAlign
                                                                             .center,
+                                                                    style: GoogleFonts.poppins(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize: windowWidth <
+                                                                                1400
+                                                                            ? 14
+                                                                            : 18,
+                                                                        fontWeight:
+                                                                            FontWeight.w500),
+                                                                  ),
+                                                                  Row(
                                                                     children: [
-                                                                      // Lottie.asset(
-                                                                      //     'assets/json/loadingBlue.json',
-                                                                      //     height: 100,
-                                                                      //     width: 100),
-                                                                      SizedBox(
-                                                                        height:
-                                                                            20,
-                                                                      ),
-                                                                      Text(
-                                                                        "Confirmation",
-                                                                        style: GoogleFonts.inter(
-                                                                            fontWeight: FontWeight
-                                                                                .w700,
-                                                                            fontSize:
-                                                                                17,
-                                                                            color: Color.fromARGB(
-                                                                                255,
-                                                                                75,
-                                                                                75,
-                                                                                75)),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        height:
-                                                                            50,
-                                                                      ),
-                                                                      Row(
-                                                                        children: [
-                                                                          Expanded(
+                                                                      // InkWell(
+                                                                      //   onTap: () {
+                                                                      //     setState(() {
+                                                                      //       _selectDate(context).then((value) {
+                                                                      //         setState(() {
+                                                                      //           formattedDate =
+                                                                      //               formatter.format(selectedDate);
+                                                                      //         });
+                                                                      //       });
+                                                                      //     });
+                                                                      //   },
+                                                                      //   child: Expanded(
+                                                                      //     child:
+                                                                      //   ),
+                                                                      // ),
+                                                                      Expanded(
+                                                                        child:
+                                                                            InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            setState(() {
+                                                                              _selectDate(context).then((value) {
+                                                                                formattedDate = formatter.format(selectedDate);
+                                                                              });
+                                                                            });
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            decoration: BoxDecoration(
+                                                                                color: Colors.white,
+                                                                                border: Border.all(color: Color.fromARGB(249, 241, 241, 241), width: 1.5),
+                                                                                borderRadius: BorderRadius.circular(10)),
                                                                             child:
-                                                                                InkWell(
-                                                                              onTap: () async {
-                                                                                Navigator.pop(dialogcontext);
-                                                                              },
-                                                                              child: Container(
-                                                                                decoration: BoxDecoration(boxShadow: [
-                                                                                  BoxShadow(
-                                                                                    color: Colors.grey.withOpacity(0.2),
-                                                                                    spreadRadius: 5,
-                                                                                    blurRadius: 5,
-                                                                                    offset: Offset(0, 2),
-                                                                                  )
-                                                                                ], color: Color.fromARGB(255, 107, 107, 107), borderRadius: BorderRadius.circular(10)),
-                                                                                padding: EdgeInsets.all(8),
-                                                                                child: Center(
-                                                                                  child: Text(
-                                                                                    "Cancel",
-                                                                                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
-                                                                                  ),
+                                                                                Row(
+                                                                              children: <Widget>[
+                                                                                SizedBox(
+                                                                                  width: 20,
                                                                                 ),
-                                                                              ),
+                                                                                Expanded(
+                                                                                  child: TextField(
+                                                                                    // controller:
+                                                                                    //     controllerSearchLoading,
+                                                                                    enabled: false,
+                                                                                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                                                                                    decoration: InputDecoration(
+                                                                                        hintStyle: GoogleFonts.poppins(
+                                                                                          fontSize: 14,
+                                                                                        ),
+                                                                                        contentPadding: EdgeInsets.symmetric(vertical: 5),
+                                                                                        border: InputBorder.none,
+                                                                                        hintText: formattedDate),
+                                                                                    onChanged: (val) {},
+                                                                                  ),
+                                                                                )
+                                                                              ],
                                                                             ),
                                                                           ),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                20,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            20,
+                                                                      ),
+                                                                      Expanded(
+                                                                        child:
+                                                                            Container(
+                                                                          decoration: BoxDecoration(
+                                                                              color: Colors.white,
+                                                                              border: Border.all(color: Color.fromARGB(249, 241, 241, 241), width: 1.5),
+                                                                              borderRadius: BorderRadius.circular(10)),
+                                                                          child:
+                                                                              Row(
+                                                                            children: <Widget>[
+                                                                              // Container(
+                                                                              //     width: 60,
+                                                                              //     child: Icon(
+                                                                              //       widget.icon,
+                                                                              //       size: 20,
+                                                                              //       color: Color(0xFFBB9B9B9),
+                                                                              //     )),
+                                                                              SizedBox(
+                                                                                width: 20,
+                                                                              ),
+                                                                              Expanded(
+                                                                                child: TextField(
+                                                                                  // focusNode: _focusNode,
+                                                                                  // autofocus:
+                                                                                  //     true, // Set autofocus to true
+                                                                                  controller: planWosController,
+                                                                                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                                                                                  decoration: InputDecoration(
+                                                                                      hintStyle: GoogleFonts.poppins(
+                                                                                        fontSize: 14,
+                                                                                      ),
+                                                                                      contentPadding: EdgeInsets.symmetric(vertical: 5),
+                                                                                      border: InputBorder.none,
+                                                                                      hintText: "Plan WOS"),
+                                                                                  onChanged: (val) async {
+                                                                                    if (val != "") {
+                                                                                      print(val);
+                                                                                    }
+                                                                                  },
+                                                                                ),
+                                                                              )
+                                                                            ],
                                                                           ),
-                                                                          Expanded(
-                                                                            child:
-                                                                                InkWell(
-                                                                              onTap: () async {
-                                                                                Navigator.pop(context);
-                                                                                Future.delayed(const Duration(milliseconds: 0), () {
-                                                                                  setState(() {
-                                                                                    _isLoading = true;
-                                                                                  });
+                                                                        ),
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                                  Row(
+                                                                    children: [
+                                                                      Expanded(
+                                                                        child:
+                                                                            Container(
+                                                                          margin:
+                                                                              EdgeInsets.symmetric(vertical: 5),
+                                                                          padding:
+                                                                              EdgeInsets.all(2),
+                                                                          decoration: BoxDecoration(
+                                                                              border: Border.all(color: Color.fromARGB(250, 230, 230, 230), width: 1),
+                                                                              borderRadius: BorderRadius.circular(10)),
+                                                                          // width: 150,
+                                                                          child:
+                                                                              CustomDropdown<shift.Shift>(
+                                                                            hintText:
+                                                                                "Shift Time",
+                                                                            initialItem:
+                                                                                selectedShift,
+                                                                            items: resultShift.data != null
+                                                                                ? resultShift.data!.length == 0
+                                                                                    ? [selectedShift]
+                                                                                    : resultShift.data
+                                                                                : [selectedShift],
+                                                                            decoration:
+                                                                                CustomDropdownDecoration(
+                                                                              listItemStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 83, 83, 83),
+                                                                              ),
+                                                                              headerStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 83, 83, 83),
+                                                                              ),
+                                                                              hintStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 110, 110, 110),
+                                                                              ),
+                                                                            ),
+                                                                            // initialItem: "Tomat",
+                                                                            onChanged:
+                                                                                (value) {
+                                                                              setState(() {
+                                                                                selectedShift = value;
+                                                                                // controllerConnection = value;
+                                                                              });
+                                                                            },
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            20,
+                                                                      ),
+                                                                      Expanded(
+                                                                        child:
+                                                                            Container(
+                                                                          margin:
+                                                                              EdgeInsets.symmetric(vertical: 5),
+                                                                          padding:
+                                                                              EdgeInsets.all(2),
+                                                                          decoration: BoxDecoration(
+                                                                              border: Border.all(color: Color.fromARGB(250, 230, 230, 230), width: 1),
+                                                                              borderRadius: BorderRadius.circular(10)),
+                                                                          // width: 150,
+                                                                          child:
+                                                                              CustomDropdown<OperationTime>(
+                                                                            hintText:
+                                                                                "Operation Time",
+                                                                            initialItem:
+                                                                                selectedOperationTime,
+                                                                            items: resultOperationTime.data !=
+                                                                                    null
+                                                                                ? resultOperationTime.data!.length ==
+                                                                                        0
+                                                                                    ? [
+                                                                                        selectedOperationTime
+                                                                                      ]
+                                                                                    : resultOperationTime
+                                                                                        .data
+                                                                                : [
+                                                                                    selectedOperationTime
+                                                                                  ],
+                                                                            decoration:
+                                                                                CustomDropdownDecoration(
+                                                                              listItemStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 83, 83, 83),
+                                                                              ),
+                                                                              headerStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 83, 83, 83),
+                                                                              ),
+                                                                              hintStyle: TextStyle(
+                                                                                fontFamily: "Netflix",
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 14,
+                                                                                letterSpacing: 0.0,
+                                                                                color: Color.fromARGB(255, 110, 110, 110),
+                                                                              ),
+                                                                            ),
+                                                                            // initialItem: "Tomat",
+                                                                            onChanged:
+                                                                                (value) {
+                                                                              setState(() {
+                                                                                selectedOperationTime = value;
+                                                                                operationTimeController.text = selectedOperationTime.value ?? "";
+                                                                                // controllerConnection = value;
+                                                                              });
+                                                                            },
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    height: 10,
+                                                                  ),
+                                                                  Row(
+                                                                    children: [
+                                                                      Expanded(
+                                                                        child:
+                                                                            InkWell(
+                                                                          onTap:
+                                                                              () async {
+                                                                            try {
+                                                                              operationTimeController.text = selectedOperationTime.value ?? "";
+                                                                              Future.delayed(const Duration(milliseconds: 0), () {
+                                                                                setState(() {
+                                                                                  _isLoading = true;
                                                                                 });
-                                                                                PostEndProduction.connectToApi(token, dashboardResult.id.toString()).then((valuea) {
+                                                                              });
+                                                                              if (planWosController.text.isEmpty) {
+                                                                                setState(() {
+                                                                                  _isLoading = false;
+                                                                                });
+                                                                                // ignore: use_build_context_synchronously
+                                                                                FancySnackbar.showSnackbar(
+                                                                                  context,
+                                                                                  snackBarType: FancySnackBarType.error,
+                                                                                  title: "Failed!",
+                                                                                  message: "Plan WOS Wajib diisi",
+                                                                                  duration: 5,
+                                                                                  onCloseEvent: () {},
+                                                                                );
+                                                                                return;
+                                                                              }
+                                                                              if (operationTimeController.text.isEmpty) {
+                                                                                setState(() {
+                                                                                  _isLoading = false;
+                                                                                });
+                                                                                // ignore: use_build_context_synchronously
+                                                                                FancySnackbar.showSnackbar(
+                                                                                  context,
+                                                                                  snackBarType: FancySnackBarType.error,
+                                                                                  title: "Failed!",
+                                                                                  message: "Operation Time Wajib diisi",
+                                                                                  duration: 5,
+                                                                                  onCloseEvent: () {},
+                                                                                );
+                                                                                return;
+                                                                              }
+                                                                              EditWos.connectToApi(token, formattedDate, selectedShift.id.toString(), planWosController.text, operationTimeController.text).then((value) {
+                                                                                setState(() {
+                                                                                  Navigator.pop(dialogcontext);
                                                                                   Future.delayed(const Duration(milliseconds: 2000), () {
                                                                                     setState(() {
                                                                                       _isLoading = false;
                                                                                     });
                                                                                   });
                                                                                   //print(storage.read(key: "token"));
-                                                                                  if (valuea.status == 200) {
+                                                                                  if (value.status == 200) {
                                                                                     _getItem();
                                                                                     FancySnackbar.showSnackbar(
                                                                                       context,
                                                                                       snackBarType: FancySnackBarType.success,
                                                                                       title: "Successfully!",
-                                                                                      message: valuea.message,
+                                                                                      message: value.message,
                                                                                       duration: 1,
                                                                                       onCloseEvent: () {},
                                                                                     );
+                                                                                    controllerCari.text = "";
+
                                                                                     _getItem();
+                                                                                    setState(() {});
                                                                                   } else {
                                                                                     FancySnackbar.showSnackbar(
                                                                                       context,
                                                                                       snackBarType: FancySnackBarType.error,
                                                                                       title: "Failed!",
-                                                                                      message: valuea.message,
+                                                                                      message: value.message,
                                                                                       duration: 5,
                                                                                       onCloseEvent: () {},
                                                                                     );
@@ -3132,84 +4411,365 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                                     setState(() {});
                                                                                   }
                                                                                 });
-                                                                              },
-                                                                              child: Container(
-                                                                                decoration: BoxDecoration(boxShadow: [
-                                                                                  BoxShadow(
-                                                                                    color: mTitleBlue.withOpacity(0.2),
-                                                                                    spreadRadius: 5,
-                                                                                    blurRadius: 5,
-                                                                                    offset: Offset(0, 2),
-                                                                                  )
-                                                                                ], color: mTitleBlue, borderRadius: BorderRadius.circular(10)),
-                                                                                padding: EdgeInsets.all(8),
-                                                                                child: Center(
-                                                                                  child: Text(
-                                                                                    "Confirm",
-                                                                                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
-                                                                                  ),
+                                                                              });
+                                                                            } catch (x) {
+                                                                              Future.delayed(const Duration(milliseconds: 2000), () {
+                                                                                setState(() {
+                                                                                  _isLoading = false;
+                                                                                  controllerCari.text = "";
+                                                                                  setState(() {});
+                                                                                });
+                                                                              });
+                                                                            }
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            decoration:
+                                                                                BoxDecoration(boxShadow: [
+                                                                              BoxShadow(
+                                                                                color: Colors.grey.withOpacity(0.2),
+                                                                                spreadRadius: 5,
+                                                                                blurRadius: 5,
+                                                                                offset: Offset(0, 2),
+                                                                              )
+                                                                            ], color: mBlueColor, borderRadius: BorderRadius.circular(10)),
+                                                                            padding:
+                                                                                EdgeInsets.all(8),
+                                                                            child:
+                                                                                Center(
+                                                                              child: Text(
+                                                                                "Edit",
+                                                                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      });
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.grey
+                                                              .withOpacity(0.2),
+                                                          spreadRadius: 5,
+                                                          blurRadius: 5,
+                                                          offset: Offset(0, 2),
+                                                        )
+                                                      ],
+                                                      color: Colors.grey,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 5),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "Edit WOS",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 15,
+                                          ),
+                                          Expanded(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      latestDateScan,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color: mDarkBlue,
+                                                              fontSize:
+                                                                  windowWidth <
+                                                                          1400
+                                                                      ? 12
+                                                                      : 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500),
+                                                    ),
+                                                    Text(
+                                                      latestTimeScan,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              color: mDarkBlue,
+                                                              fontSize:
+                                                                  windowWidth <
+                                                                          1400
+                                                                      ? 12
+                                                                      : 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        // Text(
+                                                        //   "",
+                                                        //   textAlign: TextAlign.center,
+                                                        //   style: GoogleFonts.poppins(
+                                                        //       color: mDarkBlue,
+                                                        //       fontSize:
+                                                        //           windowWidth < 1400
+                                                        //               ? 25
+                                                        //               : 35,
+                                                        //       fontWeight:
+                                                        //           FontWeight.w800),
+                                                        // ),
+                                                        Text(
+                                                          latestBodyScan,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: GoogleFonts.poppins(
+                                                              color: mDarkBlue,
+                                                              fontSize:
+                                                                  windowWidth <
+                                                                          1400
+                                                                      ? 25
+                                                                      : 25,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    Expanded(
+                                                      child: InkWell(
+                                                        onTap: () async {
+                                                          showDialog(
+                                                              barrierDismissible:
+                                                                  true,
+                                                              context: context,
+                                                              builder:
+                                                                  (dialogcontext) {
+                                                                return AlertDialog(
+                                                                    content:
+                                                                        Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .center,
+                                                                  children: [
+                                                                    // Lottie.asset(
+                                                                    //     'assets/json/loadingBlue.json',
+                                                                    //     height: 100,
+                                                                    //     width: 100),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          20,
+                                                                    ),
+                                                                    Text(
+                                                                      "Confirmation",
+                                                                      style: GoogleFonts.inter(
+                                                                          fontWeight: FontWeight
+                                                                              .w700,
+                                                                          fontSize:
+                                                                              17,
+                                                                          color: Color.fromARGB(
+                                                                              255,
+                                                                              75,
+                                                                              75,
+                                                                              75)),
+                                                                    ),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          50,
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        Expanded(
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              Navigator.pop(dialogcontext);
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                BoxShadow(
+                                                                                  color: Colors.grey.withOpacity(0.2),
+                                                                                  spreadRadius: 5,
+                                                                                  blurRadius: 5,
+                                                                                  offset: Offset(0, 2),
+                                                                                )
+                                                                              ], color: Color.fromARGB(255, 107, 107, 107), borderRadius: BorderRadius.circular(10)),
+                                                                              padding: EdgeInsets.all(8),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  "Cancel",
+                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
                                                                                 ),
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                        ],
-                                                                      ),
-                                                                    ],
-                                                                  ));
-                                                                });
-                                                          },
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                boxShadow: [
-                                                                  BoxShadow(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .withOpacity(
-                                                                            0.2),
-                                                                    spreadRadius:
-                                                                        5,
-                                                                    blurRadius:
-                                                                        5,
-                                                                    offset:
-                                                                        Offset(
-                                                                            0,
-                                                                            2),
-                                                                  )
-                                                                ],
-                                                                color:
-                                                                    Colors.grey,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            10)),
-                                                            padding:
-                                                                EdgeInsets.all(
-                                                                    8),
-                                                            child: Center(
-                                                              child: Text(
-                                                                "End Production",
-                                                                style: GoogleFonts
-                                                                    .poppins(
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontSize:
-                                                                            16),
-                                                              ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              20,
+                                                                        ),
+                                                                        Expanded(
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              Navigator.pop(context);
+                                                                              Future.delayed(const Duration(milliseconds: 0), () {
+                                                                                setState(() {
+                                                                                  _isLoading = true;
+                                                                                });
+                                                                              });
+                                                                              PostEndProduction.connectToApi(token, dashboardResult.id.toString()).then((valuea) {
+                                                                                Future.delayed(const Duration(milliseconds: 2000), () {
+                                                                                  setState(() {
+                                                                                    _isLoading = false;
+                                                                                  });
+                                                                                });
+                                                                                //print(storage.read(key: "token"));
+                                                                                if (valuea.status == 200) {
+                                                                                  _getItem();
+                                                                                  FancySnackbar.showSnackbar(
+                                                                                    context,
+                                                                                    snackBarType: FancySnackBarType.success,
+                                                                                    title: "Successfully!",
+                                                                                    message: valuea.message,
+                                                                                    duration: 1,
+                                                                                    onCloseEvent: () {},
+                                                                                  );
+                                                                                  _getItem();
+                                                                                } else {
+                                                                                  FancySnackbar.showSnackbar(
+                                                                                    context,
+                                                                                    snackBarType: FancySnackBarType.error,
+                                                                                    title: "Failed!",
+                                                                                    message: valuea.message,
+                                                                                    duration: 5,
+                                                                                    onCloseEvent: () {},
+                                                                                  );
+                                                                                  controllerCari.text = "";
+                                                                                  setState(() {});
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              decoration: BoxDecoration(boxShadow: [
+                                                                                BoxShadow(
+                                                                                  color: mTitleBlue.withOpacity(0.2),
+                                                                                  spreadRadius: 5,
+                                                                                  blurRadius: 5,
+                                                                                  offset: Offset(0, 2),
+                                                                                )
+                                                                              ], color: mTitleBlue, borderRadius: BorderRadius.circular(10)),
+                                                                              padding: EdgeInsets.all(8),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  "Confirm",
+                                                                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ));
+                                                              });
+                                                        },
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .withOpacity(
+                                                                          0.2),
+                                                                  spreadRadius:
+                                                                      5,
+                                                                  blurRadius: 5,
+                                                                  offset:
+                                                                      Offset(
+                                                                          0, 2),
+                                                                )
+                                                              ],
+                                                              color:
+                                                                  Colors.grey,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10)),
+                                                          padding:
+                                                              EdgeInsets.all(8),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "End Production",
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontSize:
+                                                                          16),
                                                             ),
                                                           ),
                                                         ),
                                                       ),
-                                                    ],
-                                                  )
-                                                ],
-                                              ),
-                                            )
-                                          ],
-                                        ),
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           )
@@ -4363,7 +5923,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 300,
                   padding: EdgeInsets.only(left: 20, top: 5),
                   child: Text(
-                    "PART ON SEALING",
+                    "PART ON TOPCOAT",
                     textAlign: TextAlign.start,
                     style: GoogleFonts.poppins(
                         color: mDarkBlue,
@@ -4479,7 +6039,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           "700P/NS",
                           "Rear Body",
                           "Spareparts",
-                          "VT/P"
+                          "VT/P",
+                          "Rak Bumper",
+                          "Rak Fender",
+                          "Rak Door"
                         ],
                         decoration: CustomDropdownDecoration(
                           listItemStyle: TextStyle(
@@ -5213,6 +6776,419 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 10),
+                                  InkWell(
+                                    onTap: () async {
+                                      bodyController.text = item.bodyId;
+                                      selectedBody = item.bodyType;
+                                      showDialog(
+                                          barrierDismissible: true,
+                                          context: context,
+                                          builder:
+                                              (BuildContext dialogcontext) {
+                                            String formattedDate =
+                                                formatter.format(selectedDate);
+                                            return StatefulBuilder(
+                                              builder:
+                                                  (BuildContext dialogcontext,
+                                                          setState) =>
+                                                      AlertDialog(
+                                                content: Container(
+                                                  height: 340,
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width /
+                                                      3,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Container(
+                                                        child: Text(
+                                                          "Edit",
+                                                          textAlign:
+                                                              TextAlign.start,
+                                                          style: GoogleFonts.poppins(
+                                                              color: mDarkBlue,
+                                                              fontSize:
+                                                                  windowWidth <
+                                                                          1400
+                                                                      ? 14
+                                                                      : 18,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600),
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        height: 15,
+                                                      ),
+                                                      Container(
+                                                        margin: EdgeInsets.only(
+                                                            bottom: 10,
+                                                            top: 10),
+                                                        child: Text(
+                                                          "No Body",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  fontSize: 10,
+                                                                  color:
+                                                                      mTitleBlue,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                        ),
+                                                      ),
+                                                      InputText(
+                                                        icon:
+                                                            Icons.phone_rounded,
+                                                        hint: "No Body",
+                                                        password: false,
+                                                        controller:
+                                                            bodyController,
+                                                        maxLine: 1,
+                                                      ),
+                                                      SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      Container(
+                                                        margin: EdgeInsets.only(
+                                                            bottom: 5),
+                                                        child: Text(
+                                                          "Body Type",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  fontSize: 10,
+                                                                  color:
+                                                                      mTitleBlue,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding:
+                                                            EdgeInsets.all(2),
+                                                        decoration: BoxDecoration(
+                                                            border: Border.all(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        250,
+                                                                        230,
+                                                                        230,
+                                                                        230),
+                                                                width: 1),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        // width: 150,
+                                                        child: CustomDropdown<
+                                                            String>(
+                                                          hintText: "Body Type",
+                                                          initialItem:
+                                                              "700P/FS",
+                                                          items: [
+                                                            "700P/FS",
+                                                            "700P/NS",
+                                                            "Rear Body",
+                                                            "Spareparts",
+                                                            "VT/P"
+                                                          ],
+                                                          decoration:
+                                                              CustomDropdownDecoration(
+                                                            listItemStyle:
+                                                                TextStyle(
+                                                              fontFamily:
+                                                                  "Netflix",
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 14,
+                                                              letterSpacing:
+                                                                  0.0,
+                                                              color: Color
+                                                                  .fromARGB(
+                                                                      255,
+                                                                      83,
+                                                                      83,
+                                                                      83),
+                                                            ),
+                                                            headerStyle:
+                                                                TextStyle(
+                                                              fontFamily:
+                                                                  "Netflix",
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 14,
+                                                              letterSpacing:
+                                                                  0.0,
+                                                              color: Color
+                                                                  .fromARGB(
+                                                                      255,
+                                                                      83,
+                                                                      83,
+                                                                      83),
+                                                            ),
+                                                            hintStyle:
+                                                                TextStyle(
+                                                              fontFamily:
+                                                                  "Netflix",
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 14,
+                                                              letterSpacing:
+                                                                  0.0,
+                                                              color: Color
+                                                                  .fromARGB(
+                                                                      255,
+                                                                      110,
+                                                                      110,
+                                                                      110),
+                                                            ),
+                                                          ),
+                                                          // initialItem: "Tomat",
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              selectedBody =
+                                                                  value;
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        height: 35,
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () async {
+                                                          if (_isLoading) {
+                                                            return;
+                                                          }
+                                                          Future.delayed(
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      0), () {
+                                                            setState(() {
+                                                              _isLoading = true;
+                                                            });
+                                                          });
+
+                                                          // if (bodyController
+                                                          //             .text ==
+                                                          //         "" ||
+                                                          //     operatorController
+                                                          //             .text ==
+                                                          //         "") {
+                                                          //   setState(() {
+                                                          //     _isLoading =
+                                                          //         false;
+                                                          //   });
+                                                          //   FancySnackbar
+                                                          //       .showSnackbar(
+                                                          //     dialogcontext,
+                                                          //     snackBarType:
+                                                          //         FancySnackBarType
+                                                          //             .error,
+                                                          //     title: "Failed!",
+                                                          //     message:
+                                                          //         "all columns are required to be filled in!",
+                                                          //     duration: 5,
+                                                          //     onCloseEvent:
+                                                          //         () {},
+                                                          //   );
+                                                          //   return;
+                                                          // }
+
+                                                          try {
+                                                            Future.delayed(
+                                                                const Duration(
+                                                                    milliseconds:
+                                                                        0), () {
+                                                              setState(() {
+                                                                _isLoading =
+                                                                    true;
+                                                              });
+                                                            });
+                                                            EditLoadingData.connectToApi(
+                                                                    token,
+                                                                    bodyController
+                                                                        .text,
+                                                                    selectedBody,
+                                                                    item.id
+                                                                        .toString())
+                                                                .then((value) {
+                                                              setState(() {
+                                                                Future.delayed(
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            500),
+                                                                    () {
+                                                                  setState(() {
+                                                                    _isLoading =
+                                                                        false;
+                                                                  });
+                                                                });
+                                                                //print(storage.read(key: "token"));
+                                                                if (value
+                                                                        .status ==
+                                                                    200) {
+                                                                  FancySnackbar
+                                                                      .showSnackbar(
+                                                                    dialogcontext,
+                                                                    snackBarType:
+                                                                        FancySnackBarType
+                                                                            .success,
+                                                                    title:
+                                                                        "Successfully!",
+                                                                    message: value
+                                                                        .message,
+                                                                    duration: 1,
+                                                                    onCloseEvent:
+                                                                        () {
+                                                                      setState(
+                                                                          () {
+                                                                        _isLoading =
+                                                                            false;
+                                                                      });
+                                                                      Navigator.pop(
+                                                                          dialogcontext);
+                                                                      _getShift();
+                                                                      _getOperationTime();
+                                                                      _getItem();
+                                                                      // Navigator.pushReplacement(context,
+                                                                      //     MaterialPageRoute(builder: (context) {
+                                                                      //   return NavigateScreen(
+                                                                      //     id: 1,
+                                                                      //   );
+                                                                      // }));
+                                                                    },
+                                                                  );
+                                                                } else {
+                                                                  setState(() {
+                                                                    _isLoading =
+                                                                        false;
+                                                                  });
+                                                                  FancySnackbar
+                                                                      .showSnackbar(
+                                                                    dialogcontext,
+                                                                    snackBarType:
+                                                                        FancySnackBarType
+                                                                            .error,
+                                                                    title:
+                                                                        "Failed!",
+                                                                    message: value
+                                                                        .message,
+                                                                    duration: 5,
+                                                                    onCloseEvent:
+                                                                        () {},
+                                                                  );
+                                                                }
+                                                              });
+                                                            });
+                                                          } catch (x) {
+                                                            Future.delayed(
+                                                                const Duration(
+                                                                    milliseconds:
+                                                                        2000),
+                                                                () {
+                                                              setState(() {
+                                                                _isLoading =
+                                                                    false;
+                                                              });
+                                                            });
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          // margin: EdgeInsets.only(right: 15),
+                                                          decoration: BoxDecoration(
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .withOpacity(
+                                                                          0.2),
+                                                                  spreadRadius:
+                                                                      5,
+                                                                  blurRadius: 5,
+                                                                  offset:
+                                                                      Offset(
+                                                                          0, 2),
+                                                                )
+                                                              ],
+                                                              color: _isLoading
+                                                                  ? const Color
+                                                                          .fromARGB(
+                                                                      255,
+                                                                      179,
+                                                                      179,
+                                                                      179)
+                                                                  : mBlueColor,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10)),
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  vertical: 12,
+                                                                  horizontal:
+                                                                      15),
+                                                          child: Center(
+                                                            child: _isLoading
+                                                                ? Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .center,
+                                                                    children: [
+                                                                      Lottie.asset(
+                                                                          'assets/json/loadingBlue.json',
+                                                                          width:
+                                                                              25),
+                                                                      Text(
+                                                                        "  Loading ...",
+                                                                        style: GoogleFonts.poppins(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            fontSize: 16),
+                                                                      ),
+                                                                    ],
+                                                                  )
+                                                                : Text(
+                                                                    "Save",
+                                                                    style: GoogleFonts.poppins(
+                                                                        color: Colors
+                                                                            .white,
+                                                                        fontSize:
+                                                                            16),
+                                                                  ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          });
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: windowWidth < 1400 ? 3 : 6,
+                                          horizontal:
+                                              windowWidth < 1400 ? 3 : 5),
+                                      decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                              255, 202, 202, 202),
+                                          borderRadius:
+                                              BorderRadius.circular(7)),
+                                      child: Icon(
+                                        Icons.edit,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
@@ -5758,8 +7734,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            dashboardResult.data != null
-                                ? dashboardResult.data!.planWos.toString()
+                            dashboardResult.loadingAchievement != null
+                                ? dashboardResult.loadingAchievement!.planWos
+                                    .toString()
                                 : "0",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
@@ -5781,8 +7758,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            dashboardResult.data != null
-                                ? dashboardResult.data!.actualWos.toString()
+                            dashboardResult.loadingAchievement != null
+                                ? dashboardResult.loadingAchievement!.actualWos
+                                    .toString()
                                 : "0",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
@@ -5804,8 +7782,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            dashboardResult.data != null
-                                ? dashboardResult.data!.repair.toString()
+                            dashboardResult.loadingAchievement != null
+                                ? dashboardResult.loadingAchievement!.repair
+                                    .toString()
                                 : "0",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
@@ -6221,7 +8200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       //         : "")
                                       //     : "",
                                       (dashboardResult.data != null
-                                              ? dashboardResult.data!.repair
+                                              ? dashboardResult.data!.ngCount
                                               : 0)
                                           .toString(),
                                       textAlign: TextAlign.center,
@@ -6282,4 +8261,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ],
     );
   }
+}
+
+Future<dynamic> konfirmasiDialog(String bodyId, String bodyType,
+    BuildContext context, void Function()? onTap) {
+  return showDialog(
+      barrierDismissible: true,
+      context: context,
+      builder: (dialogcontext) {
+        return AlertDialog(
+            content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Lottie.asset(
+            //     'assets/json/loadingBlue.json',
+            //     height: 100,
+            //     width: 100),
+            SizedBox(
+              height: 20,
+            ),
+            Text(
+              "Confirmation\n\nBody Id : $bodyId\nBody Type : $bodyType",
+              style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                  color: Color.fromARGB(255, 75, 75, 75)),
+            ),
+            SizedBox(
+              height: 50,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      Navigator.pop(dialogcontext);
+                      return;
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              spreadRadius: 5,
+                              blurRadius: 5,
+                              offset: Offset(0, 2),
+                            )
+                          ],
+                          color: Color.fromARGB(255, 107, 107, 107),
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: onTap,
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: mTitleBlue.withOpacity(0.2),
+                              spreadRadius: 5,
+                              blurRadius: 5,
+                              offset: Offset(0, 2),
+                            )
+                          ],
+                          color: mTitleBlue,
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text(
+                          "Confirm",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ));
+      });
 }

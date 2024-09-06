@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:isuzu_oee_app/url.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:loadmore_listview/loadmore_listview.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -108,81 +109,81 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
   @override
   void initState() {
     super.initState();
-    _getAll(false);
-    _getCount();
+    // _getAll(false);
+    _getCount(false, null, null);
   }
 
   var storage = const FlutterSecureStorage();
-  var resultListDevice = ListOperation();
-  void _getAll(bool search) async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      token = await storage.read(key: "token") ?? "";
+  // var resultListDevice = ListOperation();
+  // void _getAll(bool search) async {
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+  //   try {
+  //     token = await storage.read(key: "token") ?? "";
 
-      ListOperation.connectToApi(
-              "${Url().val}api/operations?per_page=7&filter=all&operation=SEALING${search ? "&search=${controllerSearchLoading.text}" : ""}",
-              token)
-          .then((value) async {
-        resultListDevice = value;
-        Future.delayed(const Duration(seconds: 1), () {
-          setState(() {
-            _isLoading = false;
-          });
-        });
-        //print(storage.read(key: "token"));
-        if (value.status == 200) {
-          Future.delayed(const Duration(seconds: 3), () {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-            }
-          });
+  //     ListOperation.connectToApi(
+  //             "${Url().val}api/operations?per_page=13&filter=all&operation=TOPCOAT${search ? "&search=${controllerSearchLoading.text}" : ""}",
+  //             token)
+  //         .then((value) async {
+  //       resultListDevice = value;
+  //       Future.delayed(const Duration(seconds: 1), () {
+  //         setState(() {
+  //           _isLoading = false;
+  //         });
+  //       });
+  //       //print(storage.read(key: "token"));
+  //       if (value.status == 200) {
+  //         Future.delayed(const Duration(seconds: 3), () {
+  //           if (mounted) {
+  //             setState(() {
+  //               _isLoading = false;
+  //             });
+  //           }
+  //         });
 
-          nextUrl = value.data != null ? value.data!.nextPageUrl ?? "" : "";
-          prevUrl = value.data != null ? value.data!.prevPageUrl ?? "" : "";
-          setState(() {});
-        } else {
-          if (value.message.contains('Unauthenticated')) {
-            FancySnackbar.showSnackbar(
-              context,
-              snackBarType: FancySnackBarType.error,
-              title: "Information!",
-              message:
-                  "Your account is used by someone else, please log in again",
-              duration: 5,
-              onCloseEvent: () {},
-            );
-            await storage.write(key: "keep", value: "false");
-            await storage.write(key: "token", value: "");
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => MyApp()),
-                (Route<dynamic> route) => false);
-          }
-          // FancySnackbar.showSnackbar(
-          //   context,
-          //   snackBarType: FancySnackBarType.error,
-          //   title: "Information!",
-          //   message: profileResult.message,
-          //   duration: 5,
-          //   onCloseEvent: () {},
-          // );
-        }
-        setState(() {});
-      });
-    } catch (x) {
-      Future.delayed(Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-      });
-    }
-  }
+  //         nextUrl = value.data != null ? value.data!.nextPageUrl ?? "" : "";
+  //         prevUrl = value.data != null ? value.data!.prevPageUrl ?? "" : "";
+  //         setState(() {});
+  //       } else {
+  //         if (value.message.contains('Unauthenticated')) {
+  //           FancySnackbar.showSnackbar(
+  //             context,
+  //             snackBarType: FancySnackBarType.error,
+  //             title: "Information!",
+  //             message:
+  //                 "Your account is used by someone else, please log in again",
+  //             duration: 5,
+  //             onCloseEvent: () {},
+  //           );
+  //           await storage.write(key: "keep", value: "false");
+  //           await storage.write(key: "token", value: "");
+  //           Navigator.of(context).pushAndRemoveUntil(
+  //               MaterialPageRoute(builder: (context) => MyApp()),
+  //               (Route<dynamic> route) => false);
+  //         }
+  //         // FancySnackbar.showSnackbar(
+  //         //   context,
+  //         //   snackBarType: FancySnackBarType.error,
+  //         //   title: "Information!",
+  //         //   message: profileResult.message,
+  //         //   duration: 5,
+  //         //   onCloseEvent: () {},
+  //         // );
+  //       }
+  //       setState(() {});
+  //     });
+  //   } catch (x) {
+  //     Future.delayed(Duration(seconds: 2), () {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     });
+  //   }
+  // }
 
   var countOperation = new CountOperation();
-  void _getCount() async {
+  void _getCount(bool search, String? dateAwal, String? dateAkhir) async {
     setState(() {
       _isLoading = true;
     });
@@ -190,7 +191,8 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
       token = await storage.read(key: "token") ?? "";
 
       CountOperation.connectToApi(
-              Url().val + "api/operations-report?per_page=7&operation=SEALING",
+              Url().val +
+                  "api/operations-report?per_page=99999&operation=TOPCOAT${search ? "&search=${controllerSearchLoading.text}" : ""}${dateAwal != null ? "&start_date=${dateAwal}" : ""}${dateAkhir != null ? "&end_date=${dateAkhir}" : ""}",
               token)
           .then((value) async {
         countOperation = value;
@@ -208,6 +210,12 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
               });
             }
           });
+          nextUrl = value.operations != null
+              ? value.operations!.nextPageUrl ?? ""
+              : "";
+          prevUrl = value.operations != null
+              ? value.operations!.prevPageUrl ?? ""
+              : "";
           setState(() {});
         } else {
           if (value.message.contains('Unauthenticated')) {
@@ -248,6 +256,7 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
 
   int startNo = 0;
 
+  bool _isLoadmore = false;
   void _nextPage() async {
     setState(() {
       _isLoading = true;
@@ -255,8 +264,8 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
     try {
       token = await storage.read(key: "token") ?? "";
 
-      ListOperation.connectToApi(nextUrl, token).then((value) async {
-        resultListDevice = value;
+      CountOperation.connectToApi(nextUrl, token).then((value) async {
+        countOperation = value;
         Future.delayed(Duration(seconds: 1), () {
           setState(() {
             _isLoading = false;
@@ -264,17 +273,20 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
         });
         //print(storage.read(key: "token"));
         if (value.status == 200) {
+          nextUrl = value.operations != null
+              ? value.operations!.nextPageUrl ?? ""
+              : "";
+          prevUrl = value.operations != null
+              ? value.operations!.prevPageUrl ?? ""
+              : "";
           Future.delayed(Duration(seconds: 3), () {
             setState(() {
               _isLoading = false;
             });
           });
-
-          nextUrl = value.data != null ? value.data!.nextPageUrl ?? "" : "";
-          prevUrl = value.data != null ? value.data!.prevPageUrl ?? "" : "";
-          setState(() {});
         } else {
           if (value.message.contains('Unauthenticated')) {
+            _isLoadmore = false;
             FancySnackbar.showSnackbar(
               context,
               snackBarType: FancySnackBarType.error,
@@ -304,6 +316,7 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
     } catch (x) {
       Future.delayed(Duration(seconds: 2), () {
         setState(() {
+          _isLoadmore = false;
           _isLoading = false;
         });
       });
@@ -314,62 +327,62 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
     setState(() {
       _isLoading = true;
     });
-    try {
-      token = await storage.read(key: "token") ?? "";
+    // try {
+    //   token = await storage.read(key: "token") ?? "";
 
-      ListOperation.connectToApi(prevUrl, token).then((value) async {
-        resultListDevice = value;
-        Future.delayed(Duration(seconds: 1), () {
-          setState(() {
-            _isLoading = false;
-          });
-        });
-        //print(storage.read(key: "token"));
-        if (value.status == 200) {
-          Future.delayed(Duration(seconds: 3), () {
-            setState(() {
-              _isLoading = false;
-            });
-          });
+    //   ListOperation.connectToApi(prevUrl, token).then((value) async {
+    //     resultListDevice = value;
+    //     Future.delayed(Duration(seconds: 1), () {
+    //       setState(() {
+    //         _isLoading = false;
+    //       });
+    //     });
+    //     //print(storage.read(key: "token"));
+    //     if (value.status == 200) {
+    //       Future.delayed(Duration(seconds: 3), () {
+    //         setState(() {
+    //           _isLoading = false;
+    //         });
+    //       });
 
-          nextUrl = value.data != null ? value.data!.nextPageUrl ?? "" : "";
-          prevUrl = value.data != null ? value.data!.prevPageUrl ?? "" : "";
-          setState(() {});
-        } else {
-          if (value.message.contains('Unauthenticated')) {
-            FancySnackbar.showSnackbar(
-              context,
-              snackBarType: FancySnackBarType.error,
-              title: "Information!",
-              message:
-                  "Your account is used by someone else, please log in again",
-              duration: 5,
-              onCloseEvent: () {},
-            );
-            await storage.write(key: "keep", value: "false");
-            await storage.write(key: "token", value: "");
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => MyApp()),
-                (Route<dynamic> route) => false);
-          }
-          // FancySnackbar.showSnackbar(
-          //   context,
-          //   snackBarType: FancySnackBarType.error,
-          //   title: "Information!",
-          //   message: profileResult.message,
-          //   duration: 5,
-          //   onCloseEvent: () {},
-          // );
-        }
-        setState(() {});
-      });
-    } catch (x) {
-      Future.delayed(Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-      });
-    }
+    //       nextUrl = value.data != null ? value.data!.nextPageUrl ?? "" : "";
+    //       prevUrl = value.data != null ? value.data!.prevPageUrl ?? "" : "";
+    //       setState(() {});
+    //     } else {
+    //       if (value.message.contains('Unauthenticated')) {
+    //         FancySnackbar.showSnackbar(
+    //           context,
+    //           snackBarType: FancySnackBarType.error,
+    //           title: "Information!",
+    //           message:
+    //               "Your account is used by someone else, please log in again",
+    //           duration: 5,
+    //           onCloseEvent: () {},
+    //         );
+    //         await storage.write(key: "keep", value: "false");
+    //         await storage.write(key: "token", value: "");
+    //         Navigator.of(context).pushAndRemoveUntil(
+    //             MaterialPageRoute(builder: (context) => MyApp()),
+    //             (Route<dynamic> route) => false);
+    //       }
+    //       // FancySnackbar.showSnackbar(
+    //       //   context,
+    //       //   snackBarType: FancySnackBarType.error,
+    //       //   title: "Information!",
+    //       //   message: profileResult.message,
+    //       //   duration: 5,
+    //       //   onCloseEvent: () {},
+    //       // );
+    //     }
+    //     setState(() {});
+    //   });
+    // } catch (x) {
+    //   Future.delayed(Duration(seconds: 2), () {
+    //     setState(() {
+    //       _isLoading = false;
+    //     });
+    //   });
+    // }
   }
 
   DateTime selectedDate = DateTime.now();
@@ -441,6 +454,8 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
   @override
   Widget build(BuildContext context) {
     windowWidth = MediaQuery.of(context).size.width;
+    String formattedDate2 = formatter.format(selectedDate);
+    String formattedDateEnd2 = formatter.format(selectedDateEnd);
     return Scaffold(
         backgroundColor: mBackgroundColor,
         body: LoadingOverlay(
@@ -575,7 +590,7 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                             vertical: 6, horizontal: 8),
                         child: Center(
                           child: Text(
-                            "NG",
+                            "REPAIR",
                             style: GoogleFonts.poppins(
                                 color: Colors.white, fontSize: 16),
                           ),
@@ -655,110 +670,257 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              width: 200,
-                              padding: const EdgeInsets.only(left: 20, top: 5),
-                              child: Text(
-                                "",
-                                textAlign: TextAlign.start,
-                                style: GoogleFonts.poppins(
-                                    color: mDarkBlue,
-                                    fontSize: windowWidth < 1400 ? 18 : 23,
-                                    fontWeight: FontWeight.w700),
-                              ),
-                            ),
+                            // Container(
+                            //   width: 200,
+                            //   padding: const EdgeInsets.only(left: 20, top: 5),
+                            //   child: Text(
+                            //     "",
+                            //     textAlign: TextAlign.start,
+                            //     style: GoogleFonts.poppins(
+                            //         color: mDarkBlue,
+                            //         fontSize: windowWidth < 1400 ? 18 : 23,
+                            //         fontWeight: FontWeight.w700),
+                            //   ),
+                            // ),
+                            // Row(
+                            //   mainAxisAlignment: MainAxisAlignment.center,
+                            //   children: [
+                            //     Container(
+                            //       width: 20,
+                            //       height: 20,
+                            //       decoration: BoxDecoration(
+                            //           border: Border.all(
+                            //               color: const Color.fromARGB(
+                            //                   255, 190, 190, 190)),
+                            //           color: const Color.fromARGB(
+                            //               255, 255, 255, 255),
+                            //           borderRadius: BorderRadius.circular(30)),
+                            //       child: InkWell(
+                            //         onTap: (countOperation.operations != null
+                            //                     ? countOperation.operations!
+                            //                             .prevPageUrl ??
+                            //                         ""
+                            //                     : "") !=
+                            //                 ""
+                            //             ? () => setState(() => _prevPage())
+                            //             : null,
+                            //         child: Icon(
+                            //           Icons.arrow_back_ios_rounded,
+                            //           size: 10,
+                            //           color: (countOperation.operations != null
+                            //                       ? countOperation.operations!
+                            //                               .prevPageUrl ??
+                            //                           ""
+                            //                       : "") !=
+                            //                   ""
+                            //               ? mTitleBlue
+                            //               : Colors.grey,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     Container(
+                            //       margin:
+                            //           const EdgeInsets.symmetric(horizontal: 7),
+                            //       width: 20,
+                            //       height: 20,
+                            //       decoration: BoxDecoration(
+                            //           color: mTitleBlue,
+                            //           borderRadius: BorderRadius.circular(30)),
+                            //       child: Align(
+                            //         alignment: Alignment.center,
+                            //         child: Text(
+                            //           countOperation.operations != null
+                            //               ? countOperation
+                            //                   .operations!.currentPage
+                            //                   .toString()
+                            //               : "",
+                            //           textAlign: TextAlign.center,
+                            //           style: GoogleFonts.poppins(
+                            //               color: Colors.white,
+                            //               fontSize: 11,
+                            //               fontWeight: FontWeight.w600),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     Container(
+                            //       width: 20,
+                            //       height: 20,
+                            //       decoration: BoxDecoration(
+                            //           border: Border.all(
+                            //               color: const Color.fromARGB(
+                            //                   255, 190, 190, 190)),
+                            //           color: const Color.fromARGB(
+                            //               255, 255, 255, 255),
+                            //           borderRadius: BorderRadius.circular(30)),
+                            //       child: InkWell(
+                            //         onTap: (countOperation.operations != null
+                            //                     ? countOperation.operations!
+                            //                             .nextPageUrl ??
+                            //                         ""
+                            //                     : "") !=
+                            //                 ""
+                            //             ? () => setState(() => _nextPage())
+                            //             : null,
+                            //         child: Icon(
+                            //           Icons.arrow_forward_ios_rounded,
+                            //           size: 10,
+                            //           color: (countOperation.operations != null
+                            //                       ? countOperation.operations!
+                            //                               .nextPageUrl ??
+                            //                           ""
+                            //                       : "") !=
+                            //                   ""
+                            //               ? mTitleBlue
+                            //               : Colors.grey,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: const Color.fromARGB(
-                                              255, 190, 190, 190)),
-                                      color: const Color.fromARGB(
-                                          255, 255, 255, 255),
-                                      borderRadius: BorderRadius.circular(30)),
-                                  child: InkWell(
-                                    onTap: (resultListDevice.data != null
-                                                ? resultListDevice
-                                                        .data!.prevPageUrl ??
-                                                    ""
-                                                : "") !=
-                                            ""
-                                        ? () => setState(() => _prevPage())
-                                        : null,
-                                    child: Icon(
-                                      Icons.arrow_back_ios_rounded,
-                                      size: 10,
-                                      color: (resultListDevice.data != null
-                                                  ? resultListDevice
-                                                          .data!.prevPageUrl ??
-                                                      ""
-                                                  : "") !=
-                                              ""
-                                          ? mTitleBlue
-                                          : Colors.grey,
+                                  margin: EdgeInsets.only(bottom: 10, top: 20),
+                                  child: Text(
+                                    "Start Date",
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: mTitleBlue,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectDate(context).then((value) {
+                                        setState(() {
+                                          formattedDate2 =
+                                              formatter.format(selectedDate);
+                                        });
+                                      });
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(
+                                            color: Color.fromARGB(
+                                                249, 241, 241, 241),
+                                            width: 1.5),
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    child: Row(
+                                      children: <Widget>[
+                                        SizedBox(
+                                          width: 20,
+                                        ),
+                                        Container(
+                                          width: 140,
+                                          child: TextField(
+                                            // controller:
+                                            //     controllerSearchLoading,
+                                            enabled: false,
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600),
+                                            decoration: InputDecoration(
+                                                hintStyle: GoogleFonts.poppins(
+                                                  fontSize: 14,
+                                                ),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        vertical: 5),
+                                                border: InputBorder.none,
+                                                hintText: formattedDate2),
+                                            onChanged: (val) {},
+                                          ),
+                                        )
+                                      ],
                                     ),
                                   ),
+                                ),
+                                const SizedBox(
+                                  width: 10,
                                 ),
                                 Container(
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 7),
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                      color: mTitleBlue,
-                                      borderRadius: BorderRadius.circular(30)),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      resultListDevice.data != null
-                                          ? resultListDevice.data!.currentPage
-                                              .toString()
-                                          : "",
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600),
+                                  margin: EdgeInsets.only(bottom: 10, top: 20),
+                                  child: Text(
+                                    "End Date",
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: mTitleBlue,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectDateEnd(context).then((value) {
+                                        setState(() {
+                                          formattedDateEnd2 =
+                                              formatter.format(selectedDateEnd);
+                                        });
+                                      });
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(
+                                            color: Color.fromARGB(
+                                                249, 241, 241, 241),
+                                            width: 1.5),
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    child: Row(
+                                      children: <Widget>[
+                                        SizedBox(
+                                          width: 20,
+                                        ),
+                                        Container(
+                                          width: 140,
+                                          child: TextField(
+                                            enabled: false,
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600),
+                                            decoration: InputDecoration(
+                                                hintStyle: GoogleFonts.poppins(
+                                                  fontSize: 14,
+                                                ),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        vertical: 0),
+                                                border: InputBorder.none,
+                                                hintText: formattedDateEnd2),
+                                            onChanged: (val) {},
+                                          ),
+                                        )
+                                      ],
                                     ),
                                   ),
                                 ),
-                                Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: const Color.fromARGB(
-                                              255, 190, 190, 190)),
-                                      color: const Color.fromARGB(
-                                          255, 255, 255, 255),
-                                      borderRadius: BorderRadius.circular(30)),
-                                  child: InkWell(
-                                    onTap: (resultListDevice.data != null
-                                                ? resultListDevice
-                                                        .data!.nextPageUrl ??
-                                                    ""
-                                                : "") !=
-                                            ""
-                                        ? () => setState(() => _nextPage())
-                                        : null,
-                                    child: Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 10,
-                                      color: (resultListDevice.data != null
-                                                  ? resultListDevice
-                                                          .data!.nextPageUrl ??
-                                                      ""
-                                                  : "") !=
-                                              ""
-                                          ? mTitleBlue
-                                          : Colors.grey,
-                                    ),
-                                  ),
+                                SizedBox(
+                                  width: 10,
                                 ),
+                                IconButton(
+                                    onPressed: () {
+                                      _getCount(true, formattedDate2,
+                                          formattedDateEnd2);
+                                    },
+                                    icon: Icon(
+                                      Icons.search,
+                                      color: mBlueColor,
+                                      size: 30,
+                                    )),
                               ],
                             ),
                             Container(
@@ -786,20 +948,16 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                                       controller: controllerSearchLoading,
                                       nama: "search",
                                       onclick: () {
-                                        _getAll(true);
+                                        _getCount(true, formattedDate2,
+                                            formattedDateEnd2);
                                       },
                                       icons: Icons.search,
                                     ),
                                     Row(
                                       children: [
-                                        // Icon(
-                                        //   Icons.print,
-                                        //   color: mBlueColor,
-                                        //   size: 30,
-                                        // ),
-                                        // SizedBox(
-                                        //   width: 10,
-                                        // ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
                                         InkWell(
                                           onTap: () async {
                                             showDialog(
@@ -1037,6 +1195,38 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                                                                     "";
 
                                                                 try {
+                                                                  if (await Permission
+                                                                      .manageExternalStorage
+                                                                      .request()
+                                                                      .isGranted) {
+                                                                  } else {
+                                                                    // ignore: use_build_context_synchronously
+                                                                    FancySnackbar
+                                                                        .showSnackbar(
+                                                                      context,
+                                                                      snackBarType:
+                                                                          FancySnackBarType
+                                                                              .error,
+                                                                      title:
+                                                                          "Information!",
+                                                                      message:
+                                                                          "No permission to read and write.",
+                                                                      duration:
+                                                                          2,
+                                                                      onCloseEvent:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            dialogcontext);
+                                                                        // Navigator.pushReplacement(context,
+                                                                        //     MaterialPageRoute(builder: (context) {
+                                                                        //   return NavigateScreen(
+                                                                        //     id: 1,
+                                                                        //   );
+                                                                        // }));
+                                                                      },
+                                                                    );
+                                                                    return;
+                                                                  }
                                                                   bool result =
                                                                       await checkPermission();
                                                                   if (result) {
@@ -1066,9 +1256,9 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                                                                           builder:
                                                                               (dialogcontext) {
                                                                             return DownloadProgressDialog(
-                                                                              path: "$folderPath/Export Quality Check Report ${formattedDateTime}.xlsx",
+                                                                              path: "$folderPath/Export History ${formattedDateTime}.xlsx",
                                                                               token: token,
-                                                                              baseUrl: Url().val + "api/operation-export?date_start=${formattedDate}&date_end=${formattedDateEnd}&operation=SEALING",
+                                                                              baseUrl: Url().val + "api/operation-export?date_start=${formattedDate}&date_end=${formattedDateEnd}&operation=TOPCOAT",
                                                                             );
                                                                           }).then((value) {
                                                                         setState(
@@ -1198,6 +1388,343 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                         SizedBox(
                           height: windowWidth < 1400 ? 10 : 20,
                         ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 4, right: 4),
+                                padding: windowWidth < 1400
+                                    ? EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 10)
+                                    : EdgeInsets.symmetric(
+                                        vertical: 20, horizontal: 20),
+                                decoration: BoxDecoration(
+                                    // boxShadow: [
+                                    //   BoxShadow(
+                                    //     color:
+                                    //         const Color.fromARGB(255, 214, 214, 214)
+                                    //             .withOpacity(0.1),
+                                    //     spreadRadius: 5,
+                                    //     blurRadius: 5,
+                                    //     offset: Offset(0, 2),
+                                    //   )
+                                    // ],
+                                    color: Color.fromARGB(255, 245, 245, 245),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                          color: mDarkBlue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(50)),
+                                      child: Icon(
+                                        Icons.file_copy,
+                                        color: mBlueColor,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "VT/P",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue.withOpacity(0.5),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          countOperation.summaries?.vtP
+                                                  .toString() ??
+                                              "0",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 4, right: 4),
+                                padding: windowWidth < 1400
+                                    ? EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 10)
+                                    : EdgeInsets.symmetric(
+                                        vertical: 20, horizontal: 20),
+                                decoration: BoxDecoration(
+                                    // boxShadow: [
+                                    //   BoxShadow(
+                                    //     color:
+                                    //         const Color.fromARGB(255, 214, 214, 214)
+                                    //             .withOpacity(0.1),
+                                    //     spreadRadius: 5,
+                                    //     blurRadius: 5,
+                                    //     offset: Offset(0, 2),
+                                    //   )
+                                    // ],
+                                    color: Color.fromARGB(255, 245, 245, 245),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                          color: mDarkBlue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(50)),
+                                      child: Icon(
+                                        Icons.file_copy,
+                                        color: mBlueColor,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "700P/FS",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue.withOpacity(0.5),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          countOperation.summaries?.fs700P
+                                                  .toString() ??
+                                              "0",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 4, right: 4),
+                                padding: windowWidth < 1400
+                                    ? EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 10)
+                                    : EdgeInsets.symmetric(
+                                        vertical: 20, horizontal: 20),
+                                decoration: BoxDecoration(
+                                    // boxShadow: [
+                                    //   BoxShadow(
+                                    //     color:
+                                    //         const Color.fromARGB(255, 214, 214, 214)
+                                    //             .withOpacity(0.1),
+                                    //     spreadRadius: 5,
+                                    //     blurRadius: 5,
+                                    //     offset: Offset(0, 2),
+                                    //   )
+                                    // ],
+                                    color: Color.fromARGB(255, 245, 245, 245),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                          color: mDarkBlue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(50)),
+                                      child: Icon(
+                                        Icons.file_copy,
+                                        color: mBlueColor,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "700P/NS",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue.withOpacity(0.5),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          countOperation.summaries?.ns700P
+                                                  .toString() ??
+                                              "0",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 4, right: 4),
+                                padding: windowWidth < 1400
+                                    ? EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 10)
+                                    : EdgeInsets.symmetric(
+                                        vertical: 20, horizontal: 20),
+                                decoration: BoxDecoration(
+                                    // boxShadow: [
+                                    //   BoxShadow(
+                                    //     color:
+                                    //         const Color.fromARGB(255, 214, 214, 214)
+                                    //             .withOpacity(0.1),
+                                    //     spreadRadius: 5,
+                                    //     blurRadius: 5,
+                                    //     offset: Offset(0, 2),
+                                    //   )
+                                    // ],
+                                    color: Color.fromARGB(255, 245, 245, 245),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                          color: mDarkBlue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(50)),
+                                      child: Icon(
+                                        Icons.file_copy,
+                                        color: mBlueColor,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Rear Body",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue.withOpacity(0.5),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          countOperation.summaries?.rearBody
+                                                  .toString() ??
+                                              "0",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 4, right: 4),
+                                padding: windowWidth < 1400
+                                    ? EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 10)
+                                    : EdgeInsets.symmetric(
+                                        vertical: 20, horizontal: 20),
+                                decoration: BoxDecoration(
+                                    // boxShadow: [
+                                    //   BoxShadow(
+                                    //     color:
+                                    //         const Color.fromARGB(255, 214, 214, 214)
+                                    //             .withOpacity(0.1),
+                                    //     spreadRadius: 5,
+                                    //     blurRadius: 5,
+                                    //     offset: Offset(0, 2),
+                                    //   )
+                                    // ],
+                                    color: Color.fromARGB(255, 245, 245, 245),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                          color: mDarkBlue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(50)),
+                                      child: Icon(
+                                        Icons.file_copy,
+                                        color: mBlueColor,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Spareparts",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue.withOpacity(0.5),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          countOperation.summaries?.spareparts
+                                                  .toString() ??
+                                              "0",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                              color: mDarkBlue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: windowWidth < 1400 ? 10 : 20,
+                        ),
                         Container(
                           width: windowWidth,
                           margin: EdgeInsets.symmetric(
@@ -1281,192 +1808,143 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
                         ),
                         Divider(),
                         Expanded(
-                            child: Container(
-                          width: windowWidth,
-                          margin: EdgeInsets.symmetric(
-                              horizontal: windowWidth < 1400 ? 10 : 20),
-                          // color: Colors.white,
-                          child: SingleChildScrollView(
-                            child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(
-                                    resultListDevice.data != null
-                                        ? (resultListDevice.data!.data != null
-                                            ? resultListDevice
-                                                .data!.data!.length
-                                            : 0)
-                                        : 0, (index) {
-                                  final item =
-                                      resultListDevice.data!.data![index];
-                                  return Container(
-                                    width: windowWidth,
-                                    margin: EdgeInsets.only(bottom: 0),
-                                    padding: EdgeInsets.all(
-                                        windowWidth < 1400 ? 3 : 5),
-                                    decoration: BoxDecoration(
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255),
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          width: windowWidth / 13,
-                                          child: Text(
-                                            (((resultListDevice.data!
-                                                                .currentPage! -
-                                                            1) *
-                                                        13) +
-                                                    (index + 1))
-                                                .toString(),
-                                            textAlign: TextAlign.start,
-                                            style: GoogleFonts.poppins(
-                                                color: mDarkBlue,
-                                                fontSize: windowWidth < 1400
-                                                    ? 12
-                                                    : 14,
-                                                fontWeight: FontWeight.w600),
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.symmetric(
+                                horizontal: windowWidth < 1400 ? 10 : 20),
+                            child: LoadMoreListView.builder(
+                              shrinkWrap: true,
+                              itemCount:
+                                  countOperation.operations?.data.length ?? 0,
+                              hasMoreItem:
+                                  countOperation.operations?.nextPageUrl !=
+                                      null,
+                              // onLoadMore: () async {
+                              //   if (_isLoadmore) return;
+                              //   _isLoadmore = true;
+
+                              //   _isLoadmore = false;
+                              // },
+                              onRefresh: () async {
+                                _getCount(false, null, null);
+                              },
+                              loadMoreWidget: Container(
+                                margin: const EdgeInsets.all(20.0),
+                                alignment: Alignment.center,
+                                child: const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation(
+                                      Color.fromARGB(255, 95, 170, 60)),
+                                ),
+                              ),
+                              itemBuilder: (context, index) {
+                                final item =
+                                    countOperation.operations?.data[index];
+                                return Container(
+                                  width: windowWidth,
+                                  margin: EdgeInsets.only(bottom: 0),
+                                  padding: EdgeInsets.all(
+                                      windowWidth < 1400 ? 3 : 5),
+                                  decoration: BoxDecoration(
+                                    color: Color.fromARGB(255, 255, 255, 255),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: windowWidth / 13,
+                                        child: Text(
+                                          ((((countOperation.operations
+                                                                  ?.currentPage ??
+                                                              0) -
+                                                          1) *
+                                                      13) +
+                                                  (index + 1))
+                                              .toString(),
+                                          textAlign: TextAlign.start,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize:
+                                                windowWidth < 1400 ? 12 : 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        Container(
-                                          width: windowWidth / 7,
-                                          child: Text(
-                                            item.date,
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(
-                                                color: mDarkBlue,
-                                                fontSize: windowWidth < 1400
-                                                    ? 12
-                                                    : 14,
-                                                fontWeight: FontWeight.w600),
+                                      ),
+                                      Container(
+                                        width: windowWidth / 7,
+                                        child: Text(
+                                          item?.date ?? "",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize:
+                                                windowWidth < 1400 ? 12 : 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        Container(
-                                          width: windowWidth / 7,
-                                          child: Text(
-                                            item.bodyId,
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(
-                                                color: mDarkBlue,
-                                                fontSize: windowWidth < 1400
-                                                    ? 12
-                                                    : 14,
-                                                fontWeight: FontWeight.w600),
+                                      ),
+                                      Container(
+                                        width: windowWidth / 7,
+                                        child: Text(
+                                          item?.bodyId ?? "",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize:
+                                                windowWidth < 1400 ? 12 : 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        Container(
-                                          width: windowWidth / 8,
-                                          child: Text(
-                                            item.bodyType,
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(
-                                                color: mDarkBlue,
-                                                fontSize: windowWidth < 1400
-                                                    ? 12
-                                                    : 14,
-                                                fontWeight: FontWeight.w600),
+                                      ),
+                                      Container(
+                                        width: windowWidth / 8,
+                                        child: Text(
+                                          item?.bodyType ?? "",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize:
+                                                windowWidth < 1400 ? 12 : 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        Container(
-                                          width: windowWidth / 8,
-                                          child: Text(
-                                            item.operationTime,
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(
-                                                color: mDarkBlue,
-                                                fontSize: windowWidth < 1400
-                                                    ? 12
-                                                    : 14,
-                                                fontWeight: FontWeight.w600),
+                                      ),
+                                      Container(
+                                        width: windowWidth / 8,
+                                        child: Text(
+                                          item?.timeIn ?? "",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize:
+                                                windowWidth < 1400 ? 12 : 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        Container(
-                                          width: windowWidth / 8,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: windowWidth < 1400
-                                                        ? 5
-                                                        : 8,
-                                                    horizontal:
-                                                        windowWidth < 1400
-                                                            ? 8
-                                                            : 10),
-                                                decoration: BoxDecoration(
-                                                    color: item.status == "ok"
-                                                        ? Color.fromARGB(
-                                                            255, 129, 218, 88)
-                                                        : const Color.fromARGB(
-                                                            255, 202, 202, 202),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            7)),
-                                                child: Text(
-                                                  "OK",
-                                                  textAlign: TextAlign.start,
-                                                  style: GoogleFonts.poppins(
-                                                      color: item.status == "ok"
-                                                          ? Colors.white
-                                                          : const Color.fromARGB(
-                                                              255, 61, 61, 61),
-                                                      fontSize:
-                                                          windowWidth < 1400
-                                                              ? 13
-                                                              : 15,
-                                                      fontWeight:
-                                                          FontWeight.w600),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: windowWidth < 1400
-                                                        ? 5
-                                                        : 8,
-                                                    horizontal:
-                                                        windowWidth < 1400
-                                                            ? 8
-                                                            : 10),
-                                                decoration: BoxDecoration(
-                                                    color: item.status == "ng"
-                                                        ? Colors.red
-                                                        : const Color.fromARGB(
-                                                            255, 202, 202, 202),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            7)),
-                                                child: Text(
-                                                  "NG",
-                                                  textAlign: TextAlign.start,
-                                                  style: GoogleFonts.poppins(
-                                                      color: item.status == "ng"
-                                                          ? Colors.white
-                                                          : const Color.fromARGB(
-                                                              255, 61, 61, 61),
-                                                      fontSize:
-                                                          windowWidth < 1400
-                                                              ? 13
-                                                              : 15,
-                                                      fontWeight:
-                                                          FontWeight.w600),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                })),
+                                      ),
+                                      Container(
+                                        width: windowWidth / 8,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            _buildStatusContainer(windowWidth,
+                                                "OK", item?.status == "ok"),
+                                            SizedBox(width: 10),
+                                            _buildStatusContainer(
+                                                windowWidth,
+                                                "REPAIR",
+                                                item?.status == "repair"),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        )),
+                        )
                       ],
                     ),
                   ),
@@ -1475,5 +1953,30 @@ class _ReportQualityScreenState extends State<ReportQualityScreen> {
             ),
           ),
         ));
+  }
+
+  Widget _buildStatusContainer(double width, String text, bool isActive) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: width < 1400 ? 5 : 8,
+        horizontal: width < 1400 ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: isActive
+            ? (text == "OK" ? Color.fromARGB(255, 129, 218, 88) : Colors.red)
+            : const Color.fromARGB(255, 202, 202, 202),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.start,
+        style: TextStyle(
+          color:
+              isActive ? Colors.white : const Color.fromARGB(255, 61, 61, 61),
+          fontSize: width < 1400 ? 13 : 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

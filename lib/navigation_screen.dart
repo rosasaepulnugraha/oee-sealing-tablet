@@ -296,7 +296,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                                   ),
                                   SizedBox(width: 10),
                                   Text(
-                                    "PLC Integration Settings",
+                                    "Tracking Unit Data",
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.poppins(
                                         color: currentPage == 1
@@ -327,7 +327,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                                       size: 20),
                                   SizedBox(width: 10),
                                   Text(
-                                    "Quality Check Report",
+                                    "History",
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.poppins(
                                         color: currentPage == 2
@@ -444,11 +444,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
               children: [
                 Text(
                   currentPage == 0
-                      ? "SEALING"
+                      ? "TOPCOAT"
                       : (currentPage == 1
                           ? "Tracking Unit Data"
                           : (currentPage == 2
-                              ? "Quality Check Report"
+                              ? "History"
                               : (currentPage == 3
                                   ? "Downtime Report"
                                   : (currentPage == 4

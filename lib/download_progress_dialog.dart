@@ -31,6 +31,7 @@ class _DownloadProgressDialogState extends State<DownloadProgressDialog> {
   void _startDownload() async {
     log("URL : " + widget.baseUrl);
     log("TOKEN : " + widget.token);
+    log("PATH : " + widget.path);
     FileDownload().startDownloading(context, (status) {
       setState(() {
         // progress = recivedBytes / totalBytes;

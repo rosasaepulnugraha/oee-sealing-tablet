@@ -78,7 +78,6 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    log(json['picture']);
     return User(
       id: json['id'],
       userId: json['user_id'],

@@ -33,7 +33,7 @@ class PostSeal {
       }, body: {
         "barcode": barcode,
         "body_type": body_type,
-        "operation": "SEALING"
+        "operation": "TOPCOAT"
       });
       log("PostSeal : " + apiResult.body);
       dynamic jsonObject = null;

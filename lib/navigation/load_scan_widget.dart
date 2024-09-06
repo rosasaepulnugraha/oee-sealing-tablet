@@ -40,7 +40,7 @@ class _LoadScanWidgetState extends State<LoadScanWidget> {
       token = await storage.read(key: "token") ?? "";
 
       ListOperation.connectToApi(
-              "${Url().val}api/operations?per_page=4&filter=today&operation=LOADING${search ? "&search=${controllerSearchLoadingSeal.text}" : ""}${body_type != null ? (body_type == "All" ? "" : "&body_type=$body_type") : ""}",
+              "${Url().val}api/operations?per_page=4&filter=today&operation=SEALING${search ? "&search=${controllerSearchLoadingSeal.text}" : ""}${body_type != null ? (body_type == "All" ? "" : "&body_type=$body_type") : ""}",
               token)
           .then((value) async {
         resultListLoadingSeal = value;

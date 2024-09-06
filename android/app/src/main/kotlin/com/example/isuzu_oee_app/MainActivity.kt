@@ -1,4 +1,4 @@
-package com.makerindo.isuzu_oee_app
+package com.makerindo.isuzu_oee_topcoat
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -33,7 +33,7 @@ class RepairBarcode {
         'Authorization': 'Bearer $token',
       }, body: {
         "barcode": barcode,
-        "operation": "SEALING"
+        "operation": "TOPCOAT"
       });
       log("RepairBarcode : " + apiResult.body);
       dynamic jsonObject = null;

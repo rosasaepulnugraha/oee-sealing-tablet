@@ -208,7 +208,7 @@
 //         if (dashboardResult.statusCode == 200) {
 //           chartData.clear();
 //           chartData.add(ChartData(
-//               "LOADING (" +
+//               "SEALING (" +
 //                   (dashboardResult.data != null
 //                       ? (dashboardResult.data!.downTimes != null
 //                           ? (double.parse(dashboardResult
@@ -226,7 +226,7 @@
 //                   : 0));
 
 //           chartData.add(ChartData(
-//               "SEALING (" +
+//               "TOPCOAT (" +
 //                   (dashboardResult.data != null
 //                       ? (dashboardResult.data!.downTimes != null
 //                           ? (double.parse(dashboardResult
@@ -337,7 +337,7 @@
 //             // chartData.clear();
 //             if (chartData.length > 2) {
 //               chartData[0] = ChartData(
-//                   "LOADING (" +
+//                   "SEALING (" +
 //                       (dashboardResult.data != null
 //                           ? (dashboardResult.data!.downTimes != null
 //                               ? (double.parse(dashboardResult
@@ -356,7 +356,7 @@
 //                       : 0);
 
 //               chartData[1] = ChartData(
-//                   "SEALING (" +
+//                   "TOPCOAT (" +
 //                       (dashboardResult.data != null
 //                           ? (dashboardResult.data!.downTimes != null
 //                               ? (double.parse(dashboardResult
@@ -550,7 +550,7 @@
 //                                                 MainAxisAlignment.spaceBetween,
 //                                             children: [
 //                                               Text(
-//                                                 "OEE LOADING PTED",
+//                                                 "OEE SEALING PTED",
 //                                                 textAlign: TextAlign.center,
 //                                                 style: GoogleFonts.poppins(
 //                                                     color: mDarkBlue,
@@ -2493,7 +2493,7 @@
 //                                                   : 0)),
 //                                     ],
 //                                     colorChart: mBlueColor,
-//                                     nameChart: "OEE SEALING",
+//                                     nameChart: "OEE TOPCOAT",
 //                                     valueChart: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.displayData !=
 //                                                 null
@@ -2512,7 +2512,7 @@
 //                                                 100
 //                                             : 0)
 //                                         : 0,
-//                                     valueSealing: dashboardResult.data != null
+//                                     valueTop Coat: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.displayData !=
 //                                                 null
 //                                             ? double.parse(dashboardResult
@@ -2571,7 +2571,7 @@
 //                                                   : 0)),
 //                                     ],
 //                                     colorChart: Colors.green,
-//                                     nameChart: "AVAILABILITY SEALING",
+//                                     nameChart: "AVAILABILITY TOPCOAT",
 //                                     valueChart: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.displayData !=
 //                                                 null
@@ -2589,7 +2589,7 @@
 //                                                 100
 //                                             : 0)
 //                                         : 0,
-//                                     valueSealing: dashboardResult.data != null
+//                                     valueTop Coat: dashboardResult.data != null
 //                                         ? (dashboardResult
 //                                                     .data!.availabilityData !=
 //                                                 null
@@ -2611,7 +2611,7 @@
 //                                         : 0,
 //                                     detailName: "AVAILABILITY DETAIL",
 //                                     nameDataOne: "Top Coat",
-//                                     nameDataTwo: "Sealing",
+//                                     nameDataTwo: "Top Coat",
 //                                     nameDataThree: "Loading PTED",
 //                                   ),
 //                                 ),
@@ -2649,7 +2649,7 @@
 //                                                   : 0)),
 //                                     ],
 //                                     colorChart: Colors.orange,
-//                                     nameChart: "PERFORMANCE SEALING",
+//                                     nameChart: "PERFORMANCE TOPCOAT",
 //                                     valueChart: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.displayData !=
 //                                                 null
@@ -2667,7 +2667,7 @@
 //                                                 100
 //                                             : 0)
 //                                         : 0,
-//                                     valueSealing: dashboardResult.data != null
+//                                     valueTop Coat: dashboardResult.data != null
 //                                         ? (dashboardResult
 //                                                     .data!.performanceData !=
 //                                                 null
@@ -2689,7 +2689,7 @@
 //                                         : 0,
 //                                     detailName: "PERFORMANCE DETAIL",
 //                                     nameDataOne: "Top Coat",
-//                                     nameDataTwo: "Sealing",
+//                                     nameDataTwo: "Top Coat",
 //                                     nameDataThree: "Loading PTED",
 //                                   ),
 //                                 ),
@@ -2727,7 +2727,7 @@
 //                                                   : 0)),
 //                                     ],
 //                                     colorChart: Colors.amber,
-//                                     nameChart: "QUALITY SEALING",
+//                                     nameChart: "QUALITY TOPCOAT",
 //                                     valueChart: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.displayData !=
 //                                                 null
@@ -2744,7 +2744,7 @@
 //                                                 100
 //                                             : 0)
 //                                         : 0,
-//                                     valueSealing: dashboardResult.data != null
+//                                     valueTop Coat: dashboardResult.data != null
 //                                         ? (dashboardResult.data!.qualityData !=
 //                                                 null
 //                                             ? double.parse(dashboardResult
@@ -2764,7 +2764,7 @@
 //                                         : 0,
 //                                     detailName: "QUALITY DETAIL",
 //                                     nameDataOne: "Top Coat",
-//                                     nameDataTwo: "Sealing",
+//                                     nameDataTwo: "Top Coat",
 //                                     nameDataThree: "Loading PTED",
 //                                   ),
 //                                 )
@@ -2789,7 +2789,7 @@
 //                                             CrossAxisAlignment.start,
 //                                         children: [
 //                                           Text(
-//                                             "DOWNTIME LOADING PTED (Minutes)",
+//                                             "DOWNTIME SEALING PTED (Minutes)",
 //                                             textAlign: TextAlign.start,
 //                                             style: GoogleFonts.poppins(
 //                                                 color: mDarkBlue,
@@ -2892,7 +2892,7 @@
 //                                                         .spaceBetween,
 //                                                 children: [
 //                                                   Text(
-//                                                     "DOWNTIME LOADING PTED (Minutes)",
+//                                                     "DOWNTIME SEALING PTED (Minutes)",
 //                                                     textAlign: TextAlign.start,
 //                                                     style: GoogleFonts.poppins(
 //                                                         color: mDarkBlue,
@@ -3229,7 +3229,7 @@
 //                                             : 0)),
 //                               ],
 //                               colorChart: mBlueColor,
-//                               nameChart: "OEE SEALING",
+//                               nameChart: "OEE TOPCOAT",
 //                               valueChart: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.displayData != null
 //                                       ? double.parse(dashboardResult
@@ -3243,7 +3243,7 @@
 //                                           100
 //                                       : 0)
 //                                   : 0,
-//                               valueSealing: dashboardResult.data != null
+//                               valueTop Coat: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.displayData != null
 //                                       ? double.parse(dashboardResult.data!
 //                                               .displayData!.oee.performance) /
@@ -3290,7 +3290,7 @@
 //                                             : 0)),
 //                               ],
 //                               colorChart: Colors.green,
-//                               nameChart: "AVAILABILITY SEALING",
+//                               nameChart: "AVAILABILITY TOPCOAT",
 //                               valueChart: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.displayData != null
 //                                       ? double.parse(dashboardResult
@@ -3306,7 +3306,7 @@
 //                                           100
 //                                       : 0)
 //                                   : 0,
-//                               valueSealing: dashboardResult.data != null
+//                               valueTop Coat: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.availabilityData !=
 //                                           null
 //                                       ? double.parse(dashboardResult
@@ -3326,7 +3326,7 @@
 //                                   : 0,
 //                               detailName: "AVAILABILITY DETAIL",
 //                               nameDataOne: "Top Coat",
-//                               nameDataTwo: "Sealing",
+//                               nameDataTwo: "Top Coat",
 //                               nameDataThree: "Loading PTED",
 //                             ),
 //                             cardChart(
@@ -3357,7 +3357,7 @@
 //                                             : 0)),
 //                               ],
 //                               colorChart: Colors.orange,
-//                               nameChart: "PERFORMANCE SEALING",
+//                               nameChart: "PERFORMANCE TOPCOAT",
 //                               valueChart: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.displayData != null
 //                                       ? double.parse(dashboardResult
@@ -3373,7 +3373,7 @@
 //                                           100
 //                                       : 0)
 //                                   : 0,
-//                               valueSealing: dashboardResult.data != null
+//                               valueTop Coat: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.performanceData !=
 //                                           null
 //                                       ? double.parse(dashboardResult
@@ -3393,7 +3393,7 @@
 //                                   : 0,
 //                               detailName: "PERFORMANCE DETAIL",
 //                               nameDataOne: "Top Coat",
-//                               nameDataTwo: "Sealing",
+//                               nameDataTwo: "Top Coat",
 //                               nameDataThree: "Loading PTED",
 //                             ),
 //                             cardChart(
@@ -3424,7 +3424,7 @@
 //                                             : 0)),
 //                               ],
 //                               colorChart: Colors.amber,
-//                               nameChart: "QUALITY SEALING",
+//                               nameChart: "QUALITY TOPCOAT",
 //                               valueChart: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.displayData != null
 //                                       ? double.parse(dashboardResult
@@ -3439,7 +3439,7 @@
 //                                           100
 //                                       : 0)
 //                                   : 0,
-//                               valueSealing: dashboardResult.data != null
+//                               valueTop Coat: dashboardResult.data != null
 //                                   ? (dashboardResult.data!.qualityData != null
 //                                       ? double.parse(dashboardResult
 //                                               .data!.qualityData!.sealing
@@ -3457,7 +3457,7 @@
 //                                   : 0,
 //                               detailName: "QUALITY DETAIL",
 //                               nameDataOne: "Top Coat",
-//                               nameDataTwo: "Sealing",
+//                               nameDataTwo: "Top Coat",
 //                               nameDataThree: "Loading PTED",
 //                             )
 //                           ],
@@ -3487,7 +3487,7 @@
 //     required this.detailName,
 //     required this.valueChart,
 //     required this.valueTopCoat,
-//     required this.valueSealing,
+//     required this.valueTop Coat,
 //     required this.valueLoading,
 //     required this.isWindows,
 //   });
@@ -3498,7 +3498,7 @@
 //   final String detailName;
 //   final double valueChart;
 //   final double valueTopCoat;
-//   final double valueSealing;
+//   final double valueTop Coat;
 //   final double valueLoading;
 //   final bool isWindows;
 //   final String nameDataOne;
@@ -3779,7 +3779,7 @@
 //                                                         : 15
 //                                                     : 15,
 //                                                 value: widget
-//                                                     .valueSealing, // Set the progress value (0.0 - 1.0)
+//                                                     .valueTop Coat, // Set the progress value (0.0 - 1.0)
 //                                               ),
 //                                             ),
 //                                           ),
@@ -3839,7 +3839,7 @@
 //                                             fontWeight: FontWeight.w800),
 //                                       ),
 //                                       Text(
-//                                         "${widget.valueSealing * 100}%",
+//                                         "${widget.valueTop Coat * 100}%",
 //                                         textAlign: TextAlign.start,
 //                                         style: GoogleFonts.dmSans(
 //                                             color: mDarkBlue,
@@ -4051,7 +4051,7 @@
 //                                                       Colors.blue),
 //                                               minHeight: 10,
 //                                               value: widget
-//                                                   .valueSealing, // Set the progress value (0.0 - 1.0)
+//                                                   .valueTop Coat, // Set the progress value (0.0 - 1.0)
 //                                             ),
 //                                           ),
 //                                         ),
@@ -4101,7 +4101,7 @@
 //                                             fontWeight: FontWeight.w800),
 //                                       ),
 //                                       Text(
-//                                         "${widget.valueSealing * 100}%",
+//                                         "${widget.valueTop Coat * 100}%",
 //                                         textAlign: TextAlign.start,
 //                                         style: GoogleFonts.dmSans(
 //                                             color: mDarkBlue,
